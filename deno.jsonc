@@ -1,0 +1,10 @@
+{
+  "tasks": {
+  },
+  "compilerOptions": {
+    "lib": [
+      "deno.window",
+      "dom"
+    ]
+  }
+}

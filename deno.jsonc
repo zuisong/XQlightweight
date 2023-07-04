@@ -1,5 +1,6 @@
 {
   "tasks": {
+    "dev": "deno run -A npm:vite dev"
   },
   "compilerOptions": {
     "lib": [

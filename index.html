@@ -2,16 +2,14 @@
 <html lang="en">
 
 <head>
-  <meta charset="UTF-8">
-  <title>象棋小巫师</title>
-  <style type="text/css">
-  </style>
+    <meta charset="UTF-8">
+    <title>象棋小巫师</title>
 </head>
 
 <body>
-  <div style="text-align:center;font-size:28px;font-family:黑体">象棋小巫师</div>
-  <div style="height:16px"></div>
-  <div style="display: flex;">
+<div style="text-align:center;font-size:28px;font-family:黑体,serif">象棋小巫师</div>
+<div style="height:16px"></div>
+<div style="display: flex;">
 
     <div id="board_1"></div>
     <div style="text-align:center;white-space:nowrap">
@@ -33,7 +31,8 @@
             <option value="2">让双马</option>
             <option value="3">让九子</option>
           </select></div>
-        <div style="padding-top:2px"><input type="button" class="button" value="重新开始" onclick="restart_click()"></div>
+        <div style="padding-top:2px"><input type="button" class="button" value="重新开始"
+                                            onclick="restart_click()"></div>
         <div style="padding-top:2px"><input type="button" class="button" value="悔棋" onclick="retract_click()"></div>
         <div style="height:12px"></div>
         <div class="label">电脑水平</div>
@@ -44,9 +43,9 @@
           </select></div>
         <div style="height:12px"></div>
         <div><input type="checkbox" class="checkbox" id="chkAnimated" checked onclick="board.animated = checked"><label
-            for="chkAnimated">动画</label></input></div>
-        <div><input type="checkbox" class="checkbox" checked onclick="board.setSound(checked)"><label
-            for="chkSound">音效</label></input></div>
+                for="chkAnimated">动画</label></div>
+        <div><input type="checkbox" class="checkbox" id="chkSound" checked onclick="board.setSound(checked)"><label
+                for="chkSound">音效</label></div>
         <div style="height:60px"></div>
         <div class="label">步骤</div>
         <div><select id="selMoveList" size="10" style="font-family:宋体" onchange="moveList_change()">
@@ -54,9 +53,9 @@
           </select></div>
       </div>
     </span>
-  </div>
-  <script type="module" src="./src/index.ts">
-  </script>
+</div>
+<script type="module" src="./src/index.ts">
+</script>
 </body>
 
 </html>

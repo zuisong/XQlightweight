@@ -1,6 +1,7 @@
-import { ASC, Board, CHR, DST, FILE_LEFT, FILE_X, RANK_TOP, RANK_Y, RESULT_UNKNOWN, SRC } from "./xiangqi-ai.ts"
+import { Board, RESULT_UNKNOWN} from "./board.ts"
+import {ASC, CHR, DST, FILE_LEFT, FILE_X, RANK_TOP, RANK_Y, SRC} from "./position.ts";
 
-let STARTUP_FEN = [
+const STARTUP_FEN = [
     "rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C5C1/9/RNBAKABNR w",
     "rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C5C1/9/RNBAKAB1R w",
     "rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C5C1/9/R1BAKAB1R w",
@@ -38,7 +39,6 @@ let selLevel = document.getElementById('selLevel')!! as HTMLSelectElement
 let container = document.getElementById("board_1")!!
 
 let board = new Board(container, "images/", "sounds/");
-//@ts-ignore
 window.board = board
 board.setSearch(16);
 board.millis = 10;
@@ -58,17 +58,17 @@ board.onAddMove = function () {
     selMoveList.scrollTop = selMoveList.scrollHeight;
 };
 
-//@ts-ignore
-window.level_change = function level_change() {
+function level_change() {
     board.millis = Math.pow(10, selLevel.selectedIndex + 1);
 }
-//@ts-ignore
-window.restart_click = function restart_click() {
+window.level_change = level_change
+export function restart_click() {
     selMoveList.options.length = 1;
     selMoveList.selectedIndex = 0;
     board.computer = 1 - selMoveMode.selectedIndex;
     board.restart(STARTUP_FEN[selHandicap.selectedIndex]);
 }
+window.restart_click = restart_click
 
 export function retract_click() {
     for (let i = board.pos.mvList.length; i < selMoveList.options.length; i++) {
@@ -79,8 +79,8 @@ export function retract_click() {
     selMoveList.selectedIndex = selMoveList.options.length - 1;
 }
 
-//@ts-ignore
 window.retract_click = retract_click
+
 export function moveList_change() {
     if (board.result == RESULT_UNKNOWN) {
         selMoveList.selectedIndex = selMoveList.options.length - 1;
@@ -104,5 +104,15 @@ export function moveList_change() {
 
 
 }
-//@ts-ignore
+
 window.moveList_change = moveList_change
+
+declare global {
+    interface Window {
+        moveList_change: typeof moveList_change
+        retract_click: typeof retract_click
+        restart_click: typeof restart_click
+        level_change: typeof level_change
+        board: typeof board
+    }
+}

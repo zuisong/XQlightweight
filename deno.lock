@@ -3,7 +3,7 @@
   "remote": {},
   "npm": {
     "specifiers": {
-      "vite": "vite@4.3.8"
+      "vite": "vite@4.3.9"
     },
     "packages": {
       "@esbuild/android-arm64@0.17.19": {
@@ -133,16 +133,16 @@
         "integrity": "sha512-1fygroTLlHu66zi26VoTDv8yRgm0Fccecssto+MhsZ0D/DGW2sm8E8AjW7NU5VVTRt5GxbeZ5qBuJr+HyLYkjQ==",
         "dependencies": {}
       },
-      "postcss@8.4.23": {
-        "integrity": "sha512-bQ3qMcpF6A/YjR55xtoTr0jGOlnPOKAIMdOWiv0EIT6HVPEaJiJB4NLljSbiHoC2RX7DN5Uvjtpbg1NPdwv1oA==",
+      "postcss@8.4.24": {
+        "integrity": "sha512-M0RzbcI0sO/XJNucsGjvWU9ERWxb/ytp1w6dKtxTKgixdtQDq4rmx/g8W1hnaheq9jgwL/oyEdH5Bc4WwJKMqg==",
         "dependencies": {
           "nanoid": "nanoid@3.3.6",
           "picocolors": "picocolors@1.0.0",
           "source-map-js": "source-map-js@1.0.2"
         }
       },
-      "rollup@3.23.0": {
-        "integrity": "sha512-h31UlwEi7FHihLe1zbk+3Q7z1k/84rb9BSwmBSr/XjOCEaBJ2YyedQDuM0t/kfOS0IxM+vk1/zI9XxYj9V+NJQ==",
+      "rollup@3.25.3": {
+        "integrity": "sha512-ZT279hx8gszBj9uy5FfhoG4bZx8c+0A1sbqtr7Q3KNWIizpTdDEPZbV2xcbvHsnFp4MavCQYZyzApJ+virB8Yw==",
         "dependencies": {
           "fsevents": "fsevents@2.3.2"
         }
@@ -151,13 +151,13 @@
         "integrity": "sha512-R0XvVJ9WusLiqTCEiGCmICCMplcCkIwwR11mOSD9CR5u+IXYdiseeEuXCVAjS54zqwkLcPNnmU4OeJ6tUrWhDw==",
         "dependencies": {}
       },
-      "vite@4.3.8": {
-        "integrity": "sha512-uYB8PwN7hbMrf4j1xzGDk/lqjsZvCDbt/JC5dyfxc19Pg8kRm14LinK/uq+HSLNswZEoKmweGdtpbnxRtrAXiQ==",
+      "vite@4.3.9": {
+        "integrity": "sha512-qsTNZjO9NoJNW7KnOrgYwczm0WctJ8m/yqYAMAK9Lxt4SoySUfS5S8ia9K7JHpa3KEeMfyF8LoJ3c5NeBJy6pg==",
         "dependencies": {
           "esbuild": "esbuild@0.17.19",
           "fsevents": "fsevents@2.3.2",
-          "postcss": "postcss@8.4.23",
-          "rollup": "rollup@3.23.0"
+          "postcss": "postcss@8.4.24",
+          "rollup": "rollup@3.25.3"
         }
       }
     }

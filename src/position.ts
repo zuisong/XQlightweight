@@ -422,7 +422,7 @@ export function ASC(c: string) {
     return c.charCodeAt(0);
 }
 
-let FEN_PIECE = "        KABNRCP kabnrcp ";
+const FEN_PIECE = "        KABNRCP kabnrcp ";
 
 export function CHAR_TO_PIECE(c: string) {
     switch (c) {

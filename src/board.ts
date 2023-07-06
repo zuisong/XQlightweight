@@ -350,9 +350,9 @@ export class Board {
       return;
     }
     this.thinking.style.visibility = "visible";
-    let this_ = this;
+    const this_ = this;
     this.busy = true;
-    let board = this
+    const board = this
     setTimeout(function () {
       this_.addMove(board.search!!.searchMain(LIMIT_DEPTH, board.millis), true);
       this_.thinking.style.visibility = "hidden";
@@ -363,8 +363,8 @@ export class Board {
     if (this.busy || this.result != RESULT_UNKNOWN) {
       return;
     }
-    let sq = this.flipped(sq_);
-    let pc = this.pos.squares[sq];
+    const sq = this.flipped(sq_);
+    const pc = this.pos.squares[sq];
     if ((pc & SIDE_TAG(this.pos.sdPlayer)) != 0) {
       this.playSound("click");
       if (this.mvLast != 0) {
@@ -382,7 +382,7 @@ export class Board {
   }
 
   drawSquare(sq: number, selected: any) {
-    let img = this.imgSquares[this.flipped(sq)]!!;
+    const img = this.imgSquares[this.flipped(sq)]!!;
     img.src = this.images + PIECE_NAME[this.pos.squares[sq]] + ".gif";
     img.style.backgroundImage = selected ? "url(" + this.images + "oos.gif)" : "";
   }

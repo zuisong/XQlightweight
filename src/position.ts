@@ -48,23 +48,30 @@ export const NULL_OKAY_MARGIN = 200;
 export const DRAW_VALUE = 20;
 export const ADVANCED_VALUE = 3;
 
-export const PIECE_KING = 0;
-export const PIECE_ADVISOR = 1;
-export const PIECE_BISHOP = 2;
-export const PIECE_KNIGHT = 3;
-export const PIECE_ROOK = 4;
-export const PIECE_CANNON = 5;
-export const PIECE_PAWN = 6;
+export const PIECE_KING = 0; // 帅/将
 
-export const RANK_TOP = 3;
-export const RANK_BOTTOM = 12;
-export const FILE_LEFT = 3;
-export const FILE_RIGHT = 11;
+export const PIECE_ADVISOR = 1; // 仕/士
+
+export const PIECE_BISHOP = 2; // 象
+
+export const PIECE_KNIGHT = 3; // 马
+
+export const PIECE_ROOK = 4; // 车
+
+export const PIECE_CANNON = 5; // 炮
+
+export const PIECE_PAWN = 6; // 兵/卒
+
+
+export const RANK_TOP = 3; // 棋盘上方边界
+export const RANK_BOTTOM = 12; // 棋盘下方边界
+export const FILE_LEFT = 3; // 棋盘左侧边界
+export const FILE_RIGHT = 11; // 棋盘右侧边界
 
 export const ADD_PIECE = false;
 export const DEL_PIECE = true;
 
-const IN_BOARD_ = [
+const IN_BOARD_ : number[]= [
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -174,13 +181,13 @@ let KNIGHT_PIN_ = [
     0, 0, 0, 0, 0, 0, 0,
 ];
 
-let KING_DELTA: number[] = [-16, -1, 1, 16];
-let ADVISOR_DELTA: number[] = [-17, -15, 15, 17];
-let KNIGHT_DELTA: number[][] = [[-33, -31], [-18, 14], [-14, 18], [31, 33]];
-let KNIGHT_CHECK_DELTA: number[][] = [[-33, -18], [-31, -14], [14, 31], [18, 33]];
-let MVV_VALUE: number[] = [50, 10, 10, 30, 40, 30, 20, 0];
+const KING_DELTA: number[] = [-16, -1, 1, 16]; // 帅/将的走法增量
+const ADVISOR_DELTA: number[] = [-17, -15, 15, 17]; // 仕/士的走法增量
+const KNIGHT_DELTA: number[][] = [[-33, -31], [-18, 14], [-14, 18], [31, 33]]; // 马的走法增量
+const KNIGHT_CHECK_DELTA: number[][] = [[-33, -18], [-31, -14], [14, 31], [18, 33]]; // 马将军的增量
+const MVV_VALUE:   number[] = [50, 10, 10, 30, 40, 30, 20, 0]; // 棋子价值,用于排序走法
 
-let PIECE_VALUE: number[][] = [
+const PIECE_VALUE: number[][] = [
     [
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,

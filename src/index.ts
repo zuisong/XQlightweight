@@ -1,5 +1,5 @@
-import { Board, RESULT_UNKNOWN} from "./board.ts"
-import {ASC, CHR, DST, FILE_LEFT, FILE_X, RANK_TOP, RANK_Y, SRC} from "./position.ts";
+import { Board, RESULT_UNKNOWN } from "./board.ts"
+import { ASC, CHR, DST, FILE_LEFT, FILE_X, RANK_TOP, RANK_Y, SRC } from "./position.ts";
 
 const STARTUP_FEN = [
     "rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C5C1/9/RNBAKABNR w",
@@ -10,52 +10,42 @@ const STARTUP_FEN = [
 
 
 function move2Iccs(mv: number) {
-    let sqSrc = SRC(mv);
-    let sqDst = DST(mv);
+    const sqSrc = SRC(mv);
+    const sqDst = DST(mv);
     return CHR(ASC("A") + FILE_X(sqSrc) - FILE_LEFT) +
         CHR(ASC("9") - RANK_Y(sqSrc) + RANK_TOP) + "-" +
         CHR(ASC("A") + FILE_X(sqDst) - FILE_LEFT) +
         CHR(ASC("9") - RANK_Y(sqDst) + RANK_TOP);
 }
 
-function createOption(text: string, value: string, ie8: boolean) {
-    let opt = document.createElement("option");
+function createOption(text: string, value: string) {
+    const opt: HTMLOptionElement = document.createElement("option");
     opt.selected = true;
     opt.value = value;
-    if (ie8) {
-        opt.text = text;
-    } else {
-        opt.innerHTML = text.replace(/ /g, "&nbsp;");
-    }
+    opt.innerHTML = text.replace(/ /g, "&nbsp;");
     return opt;
 }
 
-let selMoveList = document.getElementById("selMoveList")!! as HTMLSelectElement
+const selMoveList = document.getElementById("selMoveList")!! as HTMLSelectElement
 
-let selMoveMode = document.getElementById('selMoveMode')!! as HTMLSelectElement
-let selHandicap = document.getElementById('selHandicap')!! as HTMLSelectElement
-let selLevel = document.getElementById('selLevel')!! as HTMLSelectElement
+const selMoveMode = document.getElementById('selMoveMode')!! as HTMLSelectElement
+const selHandicap = document.getElementById('selHandicap')!! as HTMLSelectElement
+const selLevel = document.getElementById('selLevel')!! as HTMLSelectElement
 
-let container = document.getElementById("board_1")!!
+const container = document.getElementById("container")!!
 
-let board = new Board(container, "images/", "sounds/");
+const board = new Board(container, "images/", "sounds/");
 window.board = board
 board.setSearch(16);
 board.millis = 10;
 board.computer = 1;
-const _this = board;
-board.onAddMove = function () {
-    let counter: number | string = (board.pos.mvList.length >> 1);
-    let space = (counter > 99 ? "    " : "   ");
-    counter = (counter > 9 ? "" : " ") + counter + ".";
-    let text = (board.pos.sdPlayer == 0 ? space : counter) + move2Iccs(board.mvLast);
-    let value = "" + board.mvLast;
-    try {
-        selMoveList.add(createOption(text, value, false));
-    } catch (e) {
-        selMoveList.add(createOption(text, value, true));
-    }
-    selMoveList.scrollTop = selMoveList.scrollHeight;
+board.onAddMove = () => {
+  const counter: number = (board.pos.mvList.length >> 1);
+  const space = (counter > 99 ? "    " : "   ");
+  const text = (board.pos.sdPlayer == 0 ? space : ((counter > 9 ? "" : " ") + counter + ".")) + move2Iccs(board.mvLast);
+  const value = "" + board.mvLast;
+  selMoveList.add(createOption(text, value));
+  selMoveList.scrollTop = selMoveList.scrollHeight;
 };
 
 function level_change() {
@@ -86,8 +76,8 @@ export function moveList_change() {
         selMoveList.selectedIndex = selMoveList.options.length - 1;
         return;
     }
-    let from = board.pos.mvList.length;
-    let to = selMoveList.selectedIndex;
+    const from = board.pos.mvList.length;
+    const to = selMoveList.selectedIndex;
     if (from == to + 1) {
         return;
     }

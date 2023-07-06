@@ -462,7 +462,7 @@ class RC4 {
     }
 
 
-    swap(i: number, j: number) {
+   private swap(i: number, j: number) {
         let t = this.state[i];
         this.state[i] = this.state[j];
         this.state[j] = t;
@@ -484,13 +484,12 @@ class RC4 {
     }
 }
 
-let PreGen_zobristKeyPlayer: number, PreGen_zobristLockPlayer: number;
 let PreGen_zobristKeyTable: number[][] = [], PreGen_zobristLockTable: number[][] = [];
 
 let rc4 = new RC4([0]);
-PreGen_zobristKeyPlayer = rc4.nextLong();
+const PreGen_zobristKeyPlayer = rc4.nextLong();
 rc4.nextLong();
-PreGen_zobristLockPlayer = rc4.nextLong();
+const PreGen_zobristLockPlayer = rc4.nextLong();
 for (let i = 0; i < 14; i++) {
     let keys: number[] = [];
     let locks = [];
@@ -502,6 +501,7 @@ for (let i = 0; i < 14; i++) {
     PreGen_zobristKeyTable.push(keys);
     PreGen_zobristLockTable.push(locks);
 }
+rc4.nextLong();
 
 export class Position {
     sdPlayer: number = 0

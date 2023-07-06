@@ -431,7 +431,7 @@ export class Search {
         return true;
     }
 
-    searchMain(depth: number, millis: number) {
+    searchMain(depth: number, millis: number): number {
         this.mvResult = this.pos.bookMove();
         if (this.mvResult > 0) {
             this.pos.makeMove(this.mvResult);

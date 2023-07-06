@@ -11,7 +11,6 @@
 <div style="height:16px"></div>
 <div style="display: flex;">
 
-    <div id="board_1"></div>
     <div style="text-align:center;white-space:nowrap">
     </div>
     <span class="td" style="margin-right:10px">
@@ -25,7 +24,7 @@
             <option value="2">不用电脑</option>
           </select></div>
         <div class="label">先走让子</div>
-        <div><select id="selHandicap" style="padding:0px">
+        <div><select id="selHandicap" style="padding:0">
             <option selected value="0">不让子</option>
             <option value="1">让左马</option>
             <option value="2">让双马</option>
@@ -48,7 +47,7 @@
                 for="chkSound">音效</label></div>
         <div style="height:60px"></div>
         <div class="label">步骤</div>
-        <div><select id="selMoveList" size="10" style="font-family:宋体" onchange="moveList_change()">
+        <div><select id="selMoveList" size="10" style="font-family:宋体,serif" onchange="moveList_change()">
             <option selected value="0">=== 开始 ===</option>
           </select></div>
       </div>

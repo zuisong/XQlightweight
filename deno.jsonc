@@ -1,11 +1,16 @@
 {
   "tasks": {
-    "dev": "deno run -A npm:vite dev"
+    "dev": "deno run -A npm:vite dev",
+    "build": "deno run -A npm:vite build --base=./"
   },
   "compilerOptions": {
     "lib": [
       "deno.window",
-      "dom"
+      "dom",
+      "ESNext"
     ]
-  }
+  },
+  "exclude": [
+    "dist/"
+  ]
 }

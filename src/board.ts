@@ -29,7 +29,7 @@ import {
   SRC,
   WIN_VALUE
 } from "./position.ts";
-import {LIMIT_DEPTH, Search} from "./search.ts";
+import { LIMIT_DEPTH, Search } from "./search.ts";
 
 
 export let RESULT_UNKNOWN = 0;
@@ -87,9 +87,9 @@ export class Board {
   thinking: HTMLImageElement
   dummy: HTMLDivElement
 
-  onAddMove: Function | undefined = undefined
+  onAddMove: (() => void) | undefined = undefined
 
-  constructor(container: HTMLElement, images: string, sounds: any) {
+  constructor(container: HTMLElement, images: string, sounds: string) {
     this.images = images;
     this.sounds = sounds;
     this.pos = new Position();
@@ -110,7 +110,7 @@ export class Board {
     style.width = BOARD_WIDTH + "px";
     style.height = BOARD_HEIGHT + "px";
     style.background = "url(" + images + "board.jpg) no-repeat";
-    let this_ = this;
+    const this_ = this;
     for (let sq = 0; sq < 256; sq++) {
       if (!IN_BOARD(sq)) {
         this.imgSquares.push(null);
@@ -157,8 +157,7 @@ export class Board {
     try {
       new Audio(this.sounds + soundFile + ".wav").play();
     } catch (e) {
-      this.dummy.innerHTML = "<embed src=\"" + this.sounds + soundFile +
-          ".wav\" hidden=\"true\" autostart=\"true\" loop=\"false\" />";
+      this.dummy.innerHTML = `<embed src="${this.sounds}${soundFile}.wav" hidden="true" autostart="true" loop="false" />`;
     }
   }
 
@@ -166,7 +165,7 @@ export class Board {
     this.search = hashLevel == 0 ? null : new Search(this.pos, hashLevel);
   }
 
-  flipped(sq: any) {
+  flipped(sq: number) {
     return this.computer == 0 ? SQUARE_FLIP(sq) : sq;
   }
 
@@ -178,7 +177,7 @@ export class Board {
     return 1 - this.pos.sdPlayer == this.computer;
   }
 
-  addMove(mv: any, computerMove: any) {
+  addMove(mv: number, computerMove: boolean) {
     if (!this.pos.legalMove(mv)) {
       return;
     }
@@ -192,13 +191,13 @@ export class Board {
       return;
     }
 
-    let sqSrc = this.flipped(SRC(mv));
-    let xSrc = SQ_X(sqSrc);
-    let ySrc = SQ_Y(sqSrc);
-    let sqDst = this.flipped(DST(mv));
-    let xDst = SQ_X(sqDst);
-    let yDst = SQ_Y(sqDst);
-    let style = this.imgSquares[sqSrc]!!.style;
+    const sqSrc = this.flipped(SRC(mv));
+    const xSrc = SQ_X(sqSrc);
+    const ySrc = SQ_Y(sqSrc);
+    const sqDst = this.flipped(DST(mv));
+    const xDst = SQ_X(sqDst);
+    const yDst = SQ_Y(sqDst);
+    const style = this.imgSquares[sqSrc]!!.style;
     style.zIndex = '256';
     let step = MAX_STEP - 1;
     let this_ = this;
@@ -217,7 +216,7 @@ export class Board {
     }, 16);
   }
 
-  postAddMove(mv: any, computerMove: boolean) {
+  postAddMove(mv: number, computerMove: boolean) {
     if (this.mvLast > 0) {
       this.drawSquare(SRC(this.mvLast), false);
       this.drawSquare(DST(this.mvLast), false);
@@ -256,7 +255,7 @@ export class Board {
           style.left = xMate + "px";
           style.zIndex = '0';
           this_.imgSquares[sqMate]!!.src = this_.images +
-              (this_.pos.sdPlayer == 0 ? "r" : "b") + "km.gif";
+            (this_.pos.sdPlayer == 0 ? "r" : "b") + "km.gif";
           this_.postMate(computerMove);
         } else {
           style.left = (xMate + ((step & 1) == 0 ? step : -step) * 2) + "px";
@@ -355,7 +354,7 @@ export class Board {
     this.busy = true;
     let board = this
     setTimeout(function () {
-      this_.addMove(board.search?.searchMain(LIMIT_DEPTH, board.millis), true);
+      this_.addMove(board.search!!.searchMain(LIMIT_DEPTH, board.millis), true);
       this_.thinking.style.visibility = "hidden";
     }, 250);
   }

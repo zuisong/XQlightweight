@@ -242,30 +242,30 @@ const PUZZLE_LIST = [
   "3ak1b2/4arP2/5P2b/9/6P2/9/9/9/9/4K4 w",
   "3ak1b1r/4a2Pn/4b4/4C4/9/9/cR7/n8/4A1p2/3AKC3 w",
 ];
-Deno.test("111",
-  () => {
-    const pos = new Position();
-    let legal = 0, gened = 0, moved = 0, check = 0;
-    for (let i = 0; i < PUZZLE_LIST.length; i++) {
-      pos.fromFen(PUZZLE_LIST[i]);
-      for (let sqSrc = 0; sqSrc < 256; sqSrc++) {
-        if (IN_BOARD(sqSrc)) {
-          for (let sqDst = 0; sqDst < 256; sqDst++) {
-            if (IN_BOARD(sqDst)) {
-              legal += (pos.legalMove(MOVE(sqSrc, sqDst)) ? 1 : 0);
-            }
+
+Deno.test("test", () => {
+  const pos = new Position();
+  let legal = 0, gened = 0, moved = 0, check = 0;
+  for (let i = 0; i < PUZZLE_LIST.length; i++) {
+    pos.fromFen(PUZZLE_LIST[i]);
+    for (let sqSrc = 0; sqSrc < 256; sqSrc++) {
+      if (IN_BOARD(sqSrc)) {
+        for (let sqDst = 0; sqDst < 256; sqDst++) {
+          if (IN_BOARD(sqDst)) {
+            legal += (pos.legalMove(MOVE(sqSrc, sqDst)) ? 1 : 0);
           }
         }
       }
-      const mvs = pos.generateMoves(null);
-      for (let j = 0; j < mvs.length; j++) {
-        if (pos.makeMove(mvs[j])) {
-          moved++;
-          check += (pos.inCheck() ? 1 : 0);
-          pos.undoMakeMove();
-        }
-      }
-      gened += mvs.length;
     }
-    console.log(legal + "|" + gened + "|" + moved + "|" + check);
-  })
+    const mvs = pos.generateMoves(null);
+    for (let j = 0; j < mvs.length; j++) {
+      if (pos.makeMove(mvs[j])) {
+        moved++;
+        check += (pos.inCheck() ? 1 : 0);
+        pos.undoMakeMove();
+      }
+    }
+    gened += mvs.length;
+  }
+  console.log(legal + "|" + gened + "|" + moved + "|" + check);
+})

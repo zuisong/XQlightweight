@@ -32,7 +32,7 @@ import {
 import { LIMIT_DEPTH, Search } from "./search.ts";
 
 
-export let RESULT_UNKNOWN = 0;
+export const RESULT_UNKNOWN = 0;
 const RESULT_WIN = 1;
 const RESULT_DRAW = 2;
 const RESULT_LOSS = 3;
@@ -87,7 +87,7 @@ export class Board {
   thinking: HTMLImageElement
   dummy: HTMLDivElement
 
-  onAddMove: (() => void) | undefined = undefined
+  onAddMove: (()=>void) | undefined = undefined
 
   constructor(container: HTMLElement, images: string, sounds: string) {
     this.images = images;
@@ -116,8 +116,8 @@ export class Board {
         this.imgSquares.push(null);
         continue;
       }
-      let img = document.createElement("img");
-      let style = img.style;
+      const img = document.createElement("img");
+      const style = img.style;
       style.position = "absolute";
       style.left = `${SQ_X(sq)}px`;
       style.top = `${SQ_Y(sq)}px`;
@@ -200,14 +200,13 @@ export class Board {
     const style = this.imgSquares[sqSrc]!!.style;
     style.zIndex = '256';
     let step = MAX_STEP - 1;
-    let this_ = this;
-    let timer = setInterval(function () {
-      if (step == 0) {
+    const timer = setInterval(() => {
+      if(step == 0) {
         clearInterval(timer);
         style.left = xSrc + "px";
         style.top = ySrc + "px";
         style.zIndex = '0';
-        this_.postAddMove(mv, computerMove);
+        this.postAddMove(mv, computerMove);
       } else {
         style.left = MOVE_PX(xSrc, xDst, step);
         style.top = MOVE_PX(ySrc, yDst, step);
@@ -230,7 +229,7 @@ export class Board {
       this.playSound(computerMove ? "loss" : "win");
       this.result = computerMove ? RESULT_LOSS : RESULT_WIN;
 
-      let pc = SIDE_TAG(this.pos.sdPlayer) + PIECE_KING;
+      const pc = SIDE_TAG(this.pos.sdPlayer) + PIECE_KING;
       let sqMate = 0;
       for (let sq = 0; sq < 256; sq++) {
         if (this.pos.squares[sq] == pc) {
@@ -244,19 +243,18 @@ export class Board {
       }
 
       sqMate = this.flipped(sqMate);
-      let style = this.imgSquares[sqMate]!!.style;
+      const style = this.imgSquares[sqMate]!!.style;
       style.zIndex = '256';
-      let xMate = SQ_X(sqMate);
+      const xMate = SQ_X(sqMate);
       let step = MAX_STEP;
-      let this_ = this;
-      let timer = setInterval(function () {
-        if (step == 0) {
+      const timer = setInterval(() => {
+        if(step == 0) {
           clearInterval(timer);
           style.left = xMate + "px";
           style.zIndex = '0';
-          this_.imgSquares[sqMate]!!.src = this_.images +
-            (this_.pos.sdPlayer == 0 ? "r" : "b") + "km.gif";
-          this_.postMate(computerMove);
+          this.imgSquares[sqMate]!!.src = this.images +
+            (this.pos.sdPlayer == 0 ? "r" : "b") + "km.gif";
+          this.postMate(computerMove);
         } else {
           style.left = (xMate + ((step & 1) == 0 ? step : -step) * 2) + "px";
           step--;
@@ -338,7 +336,7 @@ export class Board {
     }
   }
 
-  postMate(computerMove: any) {
+  postMate(computerMove: boolean) {
     alertDelay(computerMove ? "请再接再厉！" : "祝贺你取得胜利！");
     this.postAddMove2();
     this.busy = false;
@@ -354,12 +352,12 @@ export class Board {
     this.busy = true;
     const board = this
     setTimeout(function () {
-      this_.addMove(board.search!!.searchMain(LIMIT_DEPTH, board.millis), true);
+      this_.addMove(board.search!.searchMain(LIMIT_DEPTH, board.millis as number), true);
       this_.thinking.style.visibility = "hidden";
     }, 250);
   }
 
-  clickSquare(sq_: any) {
+  clickSquare(sq_: number) {
     if (this.busy || this.result != RESULT_UNKNOWN) {
       return;
     }

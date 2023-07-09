@@ -382,7 +382,7 @@ export class Search {
 
     searchRoot(depth: number) {
         let vlBest = -MATE_VALUE;
-        let sort = new MoveSort(this.mvResult, this.pos, this.killerTable, this.historyTable);
+        const sort = new MoveSort(this.mvResult, this.pos, this.killerTable, this.historyTable);
         let mv;
         while ((mv = sort.next()) > 0) {
             if (!this.pos.makeMove(mv)) {
@@ -414,14 +414,14 @@ export class Search {
     }
 
     searchUnique(vlBeta: number, depth: number) {
-        let sort = new MoveSort(this.mvResult, this.pos, this.killerTable, this.historyTable);
+        const sort = new MoveSort(this.mvResult, this.pos, this.killerTable, this.historyTable);
         sort.next();
         let mv;
         while ((mv = sort.next()) > 0) {
             if (!this.pos.makeMove(mv)) {
                 continue;
             }
-            let vl = -this.searchFull(-vlBeta, 1 - vlBeta,
+            const vl = -this.searchFull(-vlBeta, 1 - vlBeta,
                 this.pos.inCheck() ? depth : depth - 1, false);
             this.pos.undoMakeMove();
             if (vl >= vlBeta) {
@@ -456,9 +456,9 @@ export class Search {
         this.mvResult = 0;
         this.allNodes = 0;
         this.pos.distance = 0;
-        let t = new Date().getTime();
+        const t = new Date().getTime();
         for (let i = 1; i <= depth; i++) {
-            let vl = this.searchRoot(i);
+            const vl = this.searchRoot(i);
             this.allMillis = new Date().getTime() - t;
             if (this.allMillis > millis) {
                 break;

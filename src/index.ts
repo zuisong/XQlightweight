@@ -9,7 +9,7 @@ const STARTUP_FEN = [
 ];
 
 
-function move2Iccs(mv: number) {
+function move2Iccs(mv: number) : string{
     const sqSrc = SRC(mv);
     const sqDst = DST(mv);
     return CHR(ASC("A") + FILE_X(sqSrc) - FILE_LEFT) +
@@ -72,13 +72,13 @@ export function retract_click() {
 window.retract_click = retract_click
 
 export function moveList_change() {
-    if (board.result == RESULT_UNKNOWN) {
+    if (board.result === RESULT_UNKNOWN) {
         selMoveList.selectedIndex = selMoveList.options.length - 1;
         return;
     }
     const from = board.pos.mvList.length;
     const to = selMoveList.selectedIndex;
-    if (from == to + 1) {
+    if (from === to + 1) {
         return;
     }
     if (from > to + 1) {

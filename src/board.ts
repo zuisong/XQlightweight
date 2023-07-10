@@ -43,8 +43,8 @@ const SQUARE_SIZE = 57;
 const SQUARE_LEFT = (BOARD_WIDTH - SQUARE_SIZE * 9) >> 1;
 const SQUARE_TOP = (BOARD_HEIGHT - SQUARE_SIZE * 10) >> 1;
 const THINKING_SIZE = 32;
-const THINKING_LEFT = (BOARD_WIDTH - THINKING_SIZE) >> 1;
-const THINKING_TOP = (BOARD_HEIGHT - THINKING_SIZE) >> 1;
+export const THINKING_LEFT = (BOARD_WIDTH - THINKING_SIZE) >> 1;
+export const THINKING_TOP = (BOARD_HEIGHT - THINKING_SIZE) >> 1;
 const MAX_STEP = 8;
 const PIECE_NAME: (string | null)[] = [
   "oo", null, null, null, null, null, null, null,
@@ -84,8 +84,6 @@ export class Board {
   computer = -1;
   result = RESULT_UNKNOWN;
   busy = false;
-  thinking: HTMLImageElement
-  dummy: HTMLDivElement
 
   onAddMove: (() => void) | undefined = undefined
 
@@ -105,7 +103,7 @@ export class Board {
     this.result = RESULT_UNKNOWN;
     this.busy = false;
 
-    let style = container.style;
+    const style = container.style;
     style.position = "relative";
     style.width = BOARD_WIDTH + "px";
     style.height = BOARD_HEIGHT + "px";
@@ -129,19 +127,6 @@ export class Board {
       this.imgSquares.push(img);
     }
 
-    this.thinking = document.createElement("img");
-    this.thinking.src = images + "thinking.gif";
-    style = this.thinking.style;
-    style.visibility = "hidden";
-    style.position = "absolute";
-    style.left = THINKING_LEFT + "px";
-    style.top = THINKING_TOP + "px";
-    container.appendChild(this.thinking);
-
-    this.dummy = document.createElement("div");
-    this.dummy.style.position = "absolute";
-    container.appendChild(this.dummy);
-
     this.flushBoard();
   }
 
@@ -150,11 +135,7 @@ export class Board {
     if (!this.sound) {
       return;
     }
-    try {
-      new Audio(this.sounds + soundFile + ".wav").play();
-    } catch (_e) {
-      this.dummy.innerHTML = `<embed src="${this.sounds}${soundFile}.wav" hidden="true" autostart="true" loop="false" />`;
-    }
+    new Audio(this.sounds + soundFile + ".wav").play();
   }
 
   setSearch(hashLevel: number) {
@@ -246,7 +227,7 @@ export class Board {
       const timer = setInterval(() => {
         if (step == 0) {
           clearInterval(timer);
-          style.left = xMate + "px";
+          style.left = `${xMate}px`;
           style.zIndex = '0';
           this.imgSquares[sqMate]!.src = this.images +
             (this.pos.sdPlayer == 0 ? "r" : "b") + "km.gif";
@@ -343,11 +324,12 @@ export class Board {
       this.busy = false;
       return;
     }
-    this.thinking.style.visibility = "visible";
+    const thinking = document.getElementById("thinking")!
+    thinking.style.visibility = "visible";
     this.busy = true;
     setTimeout(() => {
       this.addMove(this.search!.searchMain(LIMIT_DEPTH, this.millis as number), true);
-      this.thinking.style.visibility = "hidden";
+      thinking.style.visibility = "hidden";
     }, 250);
   }
 

@@ -29,7 +29,7 @@ export function createOption(text: string, value: string) {
     const opt: HTMLOptionElement = document.createElement("option");
     opt.selected = true;
     opt.value = value;
-    opt.innerHTML = text.replace(/ /g, "&nbsp;");
+    opt.innerHTML = text.replace(" ", "&nbsp;");
     return opt;
 }
 

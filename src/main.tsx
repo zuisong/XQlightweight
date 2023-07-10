@@ -1,7 +1,15 @@
 import { h, render } from "https://esm.sh/preact@10";
-import { Board } from "./board.ts";
-import { createOption, level_change, move2Iccs, moveList_change, restart_click, retract_click, selMoveList } from "./index.ts";
-h!
+import { Board, THINKING_LEFT, THINKING_TOP } from "./board.ts";
+import {
+  createOption,
+  level_change,
+  move2Iccs,
+  moveList_change,
+  restart_click,
+  retract_click,
+  selMoveList,
+} from "./index.ts";
+h!;
 /** @jsx h */
 export function App() {
   return (
@@ -14,7 +22,18 @@ export function App() {
         <div style="text-align:center;white-space:nowrap">
         </div>
         <span class="td" style="margin-right:10px">
-          <div id="container"></div>
+          <div id="container">
+            <img
+              id="thinking"
+              src={"images/thinking.gif"}
+              style={{
+                visibility: "hidden",
+                position: "absolute",
+                left: THINKING_LEFT,
+                top: THINKING_TOP,
+              }}
+            />
+          </div>
         </span>
         <span class="td" style="vertical-align:top;width:120px;">
           <div style="text-align:left">
@@ -67,7 +86,7 @@ export function App() {
                 class="checkbox"
                 id="chkAnimated"
                 checked
-                onClick= {(e) => board.animated = e.currentTarget.checked}
+                onClick={(e) => board.animated = e.currentTarget.checked}
               />
               <label for="chkAnimated">动画</label>
             </div>
@@ -77,7 +96,7 @@ export function App() {
                 class="checkbox"
                 id="chkSound"
                 checked
-                onClick={ e => board.setSound(e.currentTarget.checked)}
+                onClick={(e) => board.setSound(e.currentTarget.checked)}
               />
               <label for="chkSound">音效</label>
             </div>
@@ -102,19 +121,21 @@ export function App() {
 
 render(App(), document.body!);
 
-const container = document.getElementById("container")!
+const container = document.getElementById("container")!;
 
 const board = new Board(container, "images/", "sounds/");
-window.board = board
+window.board = board;
 board.setSearch(16);
 board.millis = 10;
 board.computer = 1;
 board.onAddMove = () => {
-  const counter: number = (board.pos.mvList.length >> 1);
-  const space = (counter > 99 ? "    " : "   ");
-  const text = (board.pos.sdPlayer == 0 ? space : ((counter > 9 ? "" : " ") + counter + ".")) + move2Iccs(board.mvLast);
+  const counter: number = board.pos.mvList.length >> 1;
+  const space = counter > 99 ? "    " : "   ";
+  const text =
+    (board.pos.sdPlayer == 0
+      ? space
+      : ((counter > 9 ? "" : " ") + counter + ".")) + move2Iccs(board.mvLast);
   const value = "" + board.mvLast;
   selMoveList().add(createOption(text, value));
   selMoveList().scrollTop = selMoveList().scrollHeight;
 };
-

@@ -30,7 +30,7 @@ import {
     WIN_VALUE
 } from "./position.ts";
 
-let SHELL_STEP = [0, 1, 4, 13, 40, 121, 364, 1093];
+const SHELL_STEP = [0, 1, 4, 13, 40, 121, 364, 1093];
 
 export function shellSort(mvs: number[], vls: number[]) {
     let stepLevel = 1;
@@ -39,10 +39,10 @@ export function shellSort(mvs: number[], vls: number[]) {
     }
     stepLevel--;
     while (stepLevel > 0) {
-        let step = SHELL_STEP[stepLevel];
+        const step = SHELL_STEP[stepLevel];
         for (let i = step; i < mvs.length; i++) {
-            let mvBest = mvs[i];
-            let vlBest = vls[i];
+            const mvBest = mvs[i];
+            const vlBest = vls[i];
             let j = i - step;
             while (j >= 0 && vlBest > vls[j]) {
                 mvs[j + step] = mvs[j];
@@ -56,11 +56,11 @@ export function shellSort(mvs: number[], vls: number[]) {
     }
 }
 
-let PHASE_HASH = 0;
-let PHASE_KILLER_1 = 1;
-let PHASE_KILLER_2 = 2;
-let PHASE_GEN_MOVES = 3;
-let PHASE_REST = 4;
+const PHASE_HASH = 0;
+const PHASE_KILLER_1 = 1;
+const PHASE_KILLER_2 = 2;
+const PHASE_GEN_MOVES = 3;
+const PHASE_REST = 4;
 class MoveSort {
 
     mvs: number[] = []
@@ -69,13 +69,13 @@ class MoveSort {
     pos: Position;
     mvKiller1: number
     mvKiller2: number
-    historyTable: any;
+    historyTable: number[];
     phase: number;
     singleReply: boolean;
     index: number;
 
     constructor(mvHash: number,
-                pos: Position, killerTable: number[][], historyTable: number[]) {
+        pos: Position, killerTable: number[][], historyTable: number[]) {
         this.mvs = [];
         this.vls = [];
         this.mvHash = this.mvKiller1 = this.mvKiller2 = 0;
@@ -87,9 +87,9 @@ class MoveSort {
 
         if (pos.inCheck()) {
             this.phase = PHASE_REST;
-            let mvsAll = pos.generateMoves(null);
+            const mvsAll = pos.generateMoves(null);
             for (let i = 0; i < mvsAll.length; i++) {
-                let mv = mvsAll[i]
+                const mv = mvsAll[i]
                 if (!pos.makeMove(mv)) {
                     continue;
                 }
@@ -114,21 +114,24 @@ class MoveSort {
                 if (this.mvHash > 0) {
                     return this.mvHash;
                 }
-            // No Break
+                break
+
             case PHASE_KILLER_1:
                 this.phase = PHASE_KILLER_2;
                 if (this.mvKiller1 != this.mvHash && this.mvKiller1 > 0 &&
                     this.pos.legalMove(this.mvKiller1)) {
                     return this.mvKiller1;
                 }
-            // No Break
+                break
+
             case PHASE_KILLER_2:
                 this.phase = PHASE_GEN_MOVES;
                 if (this.mvKiller2 != this.mvHash && this.mvKiller2 > 0 &&
                     this.pos.legalMove(this.mvKiller2)) {
                     return this.mvKiller2;
                 }
-            // No Break
+                break
+
             case PHASE_GEN_MOVES:
                 this.phase = PHASE_REST;
                 this.mvs = this.pos.generateMoves(null);
@@ -138,38 +141,41 @@ class MoveSort {
                 }
                 shellSort(this.mvs, this.vls);
                 this.index = 0;
-            // No Break
+                break
+
             default:
-                while (this.index < this.mvs.length) {
-                    let mv = this.mvs[this.index];
-                    this.index++;
-                    if (mv != this.mvHash && mv != this.mvKiller1 && mv != this.mvKiller2) {
-                        return mv;
-                    }
-                }
+                break;
+
+        }
+        while (this.index < this.mvs.length) {
+            const mv = this.mvs[this.index];
+            this.index++;
+            if (mv != this.mvHash && mv != this.mvKiller1 && mv != this.mvKiller2) {
+                return mv;
+            }
         }
         return 0;
     }
 }
-export let LIMIT_DEPTH = 64;
-let NULL_DEPTH = 2;
-let RANDOMNESS = 8;
+export const LIMIT_DEPTH = 64;
+const NULL_DEPTH = 2;
+const RANDOMNESS = 8;
 
-let HASH_ALPHA = 1;
-let HASH_BETA = 2;
-let HASH_PV = 3;
+const HASH_ALPHA = 1;
+const HASH_BETA = 2;
+const HASH_PV = 3;
 
 export class Search {
     hashMask: number
-    mvResult: number = 0
+    mvResult = 0
     pos: Position
-    allMillis: number = 0
+    allMillis = 0
     hashTable: { depth: number; flag: number; vl: number; mv: number; zobristLock: number; }[] = []
     historyTable: number[] = []
-    allNodes: number = 0
+    allNodes = 0
     killerTable: number[][] = []
 
-    constructor(pos: any, hashLevel: number) {
+    constructor(pos: Position, hashLevel: number) {
         this.hashMask = (1 << hashLevel) - 1;
         this.pos = pos;
     }
@@ -179,8 +185,8 @@ export class Search {
         return this.hashTable[this.pos.zobristKey & this.hashMask];
     }
 
-    probeHash(vlAlpha: number, vlBeta: number, depth: number, mv: any[]) {
-        let hash = this.getHashItem();
+    probeHash(vlAlpha: number, vlBeta: number, depth: number, mv: number[]) {
+        const hash = this.getHashItem();
         if (hash.zobristLock != this.pos.zobristLock) {
             mv[0] = 0;
             return -MATE_VALUE;
@@ -214,8 +220,8 @@ export class Search {
         return hash.vl;
     }
 
-    recordHash(flag: any, vl: number, depth: number, mv: number) {
-        let hash = this.getHashItem();
+    recordHash(flag: number, vl: number, depth: number, mv: number) {
+        const hash = this.getHashItem();
         if (hash.depth > depth) {
             return;
         }
@@ -240,23 +246,23 @@ export class Search {
         hash.zobristLock = this.pos.zobristLock;
     }
 
-    setBestMove(mv: any, depth: number) {
+    setBestMove(mv: number, depth: number) {
         this.historyTable[this.pos.historyIndex(mv)] += depth * depth;
-        let mvsKiller = this.killerTable[this.pos.distance];
+        const mvsKiller = this.killerTable[this.pos.distance];
         if (mvsKiller[0] != mv) {
             mvsKiller[1] = mvsKiller[0];
             mvsKiller[0] = mv;
         }
     }
 
-    searchQuiesc(vlAlpha_: any, vlBeta: number) {
+    searchQuiesc(vlAlpha_: number, vlBeta: number) {
         let vlAlpha = vlAlpha_;
         this.allNodes++;
         let vl = this.pos.mateValue();
         if (vl >= vlBeta) {
             return vl;
         }
-        let vlRep = this.pos.repStatus(1);
+        const vlRep = this.pos.repStatus(1);
         if (vlRep > 0) {
             return this.pos.repValue(vlRep);
         }
@@ -264,7 +270,8 @@ export class Search {
             return this.pos.evaluate();
         }
         let vlBest = -MATE_VALUE;
-        let mvs = [], vls: any[] = [];
+        let mvs = []
+        const vls: number[] = [];
         if (this.pos.inCheck()) {
             mvs = this.pos.generateMoves(null);
             for (let i = 0; i < mvs.length; i++) {
@@ -306,7 +313,7 @@ export class Search {
         return vlBest == -MATE_VALUE ? this.pos.mateValue() : vlBest;
     }
 
-    searchFull(vlAlpha_: any, vlBeta: number, depth: number, noNull: any) {
+    searchFull(vlAlpha_: number, vlBeta: number, depth: number, noNull: boolean) {
         let vlAlpha = vlAlpha_;
         if (depth <= 0) {
             return this.searchQuiesc(vlAlpha, vlBeta);
@@ -316,11 +323,11 @@ export class Search {
         if (vl >= vlBeta) {
             return vl;
         }
-        let vlRep = this.pos.repStatus(1);
+        const vlRep = this.pos.repStatus(1);
         if (vlRep > 0) {
             return this.pos.repValue(vlRep);
         }
-        let mvHash = [0];
+        const mvHash = [0];
         vl = this.probeHash(vlAlpha, vlBeta, depth, mvHash);
         if (vl > -MATE_VALUE) {
             return vl;
@@ -340,13 +347,13 @@ export class Search {
         let hashFlag = HASH_ALPHA;
         let vlBest = -MATE_VALUE;
         let mvBest = 0;
-        let sort = new MoveSort(mvHash[0], this.pos, this.killerTable, this.historyTable);
+        const sort = new MoveSort(mvHash[0], this.pos, this.killerTable, this.historyTable);
         let mv;
         while ((mv = sort.next()) > 0) {
             if (!this.pos.makeMove(mv)) {
                 continue;
             }
-            let newDepth = this.pos.inCheck() || sort.singleReply ? depth : depth - 1;
+            const newDepth = this.pos.inCheck() || sort.singleReply ? depth : depth - 1;
             if (vlBest == -MATE_VALUE) {
                 vl = -this.searchFull(-vlBeta, -vlAlpha, newDepth, false);
             } else {
@@ -388,7 +395,7 @@ export class Search {
             if (!this.pos.makeMove(mv)) {
                 continue;
             }
-            let newDepth = this.pos.inCheck() ? depth : depth - 1;
+            const newDepth = this.pos.inCheck() ? depth : depth - 1;
             let vl;
             if (vlBest == -MATE_VALUE) {
                 vl = -this.searchFull(-MATE_VALUE, MATE_VALUE, newDepth, true);

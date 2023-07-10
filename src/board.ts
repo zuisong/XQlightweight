@@ -87,7 +87,7 @@ export class Board {
   thinking: HTMLImageElement
   dummy: HTMLDivElement
 
-  onAddMove: (()=>void) | undefined = undefined
+  onAddMove: (() => void) | undefined = undefined
 
   constructor(container: HTMLElement, images: string, sounds: string) {
     this.images = images;
@@ -110,7 +110,6 @@ export class Board {
     style.width = BOARD_WIDTH + "px";
     style.height = BOARD_HEIGHT + "px";
     style.background = "url(" + images + "board.jpg) no-repeat";
-    const this_ = this;
     for (let sq = 0; sq < 256; sq++) {
       if (!IN_BOARD(sq)) {
         this.imgSquares.push(null);
@@ -124,11 +123,8 @@ export class Board {
       style.width = `${SQUARE_SIZE}px`;
       style.height = `${SQUARE_SIZE}px`;
       style.zIndex = "0";
-      img.onmousedown = function (sq_) {
-        return function () {
-          this_.clickSquare(sq_);
-        }
-      }(sq);
+      img.onmousedown = () => this.clickSquare(sq)
+
       container.appendChild(img);
       this.imgSquares.push(img);
     }
@@ -156,7 +152,7 @@ export class Board {
     }
     try {
       new Audio(this.sounds + soundFile + ".wav").play();
-    } catch (e) {
+    } catch (_e) {
       this.dummy.innerHTML = `<embed src="${this.sounds}${soundFile}.wav" hidden="true" autostart="true" loop="false" />`;
     }
   }
@@ -197,11 +193,11 @@ export class Board {
     const sqDst = this.flipped(DST(mv));
     const xDst = SQ_X(sqDst);
     const yDst = SQ_Y(sqDst);
-    const style = this.imgSquares[sqSrc]!!.style;
+    const style = this.imgSquares[sqSrc]!.style;
     style.zIndex = '256';
     let step = MAX_STEP - 1;
     const timer = setInterval(() => {
-      if(step == 0) {
+      if (step == 0) {
         clearInterval(timer);
         style.left = xSrc + "px";
         style.top = ySrc + "px";
@@ -243,16 +239,16 @@ export class Board {
       }
 
       sqMate = this.flipped(sqMate);
-      const style = this.imgSquares[sqMate]!!.style;
+      const style = this.imgSquares[sqMate]!.style;
       style.zIndex = '256';
       const xMate = SQ_X(sqMate);
       let step = MAX_STEP;
       const timer = setInterval(() => {
-        if(step == 0) {
+        if (step == 0) {
           clearInterval(timer);
           style.left = xMate + "px";
           style.zIndex = '0';
-          this.imgSquares[sqMate]!!.src = this.images +
+          this.imgSquares[sqMate]!.src = this.images +
             (this.pos.sdPlayer == 0 ? "r" : "b") + "km.gif";
           this.postMate(computerMove);
         } else {
@@ -348,12 +344,10 @@ export class Board {
       return;
     }
     this.thinking.style.visibility = "visible";
-    const this_ = this;
     this.busy = true;
-    const board = this
-    setTimeout(function () {
-      this_.addMove(board.search!.searchMain(LIMIT_DEPTH, board.millis as number), true);
-      this_.thinking.style.visibility = "hidden";
+    setTimeout(() => {
+      this.addMove(this.search!.searchMain(LIMIT_DEPTH, this.millis as number), true);
+      this.thinking.style.visibility = "hidden";
     }, 250);
   }
 
@@ -379,8 +373,8 @@ export class Board {
     }
   }
 
-  drawSquare(sq: number, selected: any) {
-    const img = this.imgSquares[this.flipped(sq)]!!;
+  drawSquare(sq: number, selected: boolean) {
+    const img = this.imgSquares[this.flipped(sq)]!;
     img.src = this.images + PIECE_NAME[this.pos.squares[sq]] + ".gif";
     img.style.backgroundImage = selected ? "url(" + this.images + "oos.gif)" : "";
   }
@@ -394,7 +388,7 @@ export class Board {
     }
   }
 
-  restart(fen: any) {
+  restart(fen: string) {
     if (this.busy) {
       return;
     }
@@ -420,7 +414,7 @@ export class Board {
     this.response();
   }
 
-  setSound(sound: any) {
+  setSound(sound: boolean) {
     this.sound = sound;
     if (sound) {
       this.playSound("click");

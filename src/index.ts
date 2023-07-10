@@ -26,13 +26,13 @@ function createOption(text: string, value: string) {
     return opt;
 }
 
-const selMoveList = document.getElementById("selMoveList")!! as HTMLSelectElement
+const selMoveList = document.getElementById("selMoveList")! as HTMLSelectElement
 
-const selMoveMode = document.getElementById('selMoveMode')!! as HTMLSelectElement
-const selHandicap = document.getElementById('selHandicap')!! as HTMLSelectElement
-const selLevel = document.getElementById('selLevel')!! as HTMLSelectElement
+const selMoveMode = document.getElementById('selMoveMode')! as HTMLSelectElement
+const selHandicap = document.getElementById('selHandicap')! as HTMLSelectElement
+const selLevel = document.getElementById('selLevel')! as HTMLSelectElement
 
-const container = document.getElementById("container")!!
+const container = document.getElementById("container")!
 
 const board = new Board(container, "images/", "sounds/");
 window.board = board

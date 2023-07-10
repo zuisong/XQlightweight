@@ -1,4 +1,3 @@
-// deno-lint-ignore-file no-inferrable-types
 /*
 position.js - Source Code for XiangQi Wizard Light, Part I
 

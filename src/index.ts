@@ -77,10 +77,6 @@ export function moveList_change() {
 
 declare global {
     interface Window {
-        moveList_change: typeof moveList_change
-        retract_click: typeof retract_click
-        restart_click: typeof restart_click
-        level_change: typeof level_change
         board: Board
     }
 }

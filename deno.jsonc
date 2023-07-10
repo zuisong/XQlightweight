@@ -13,6 +13,13 @@
       "ESNext"
     ]
   },
+  "lint": {
+    "rules": {
+      "exclude": [
+        "no-inferrable-types"
+      ]
+    }
+  },
   "exclude": [
     "dist/"
   ]

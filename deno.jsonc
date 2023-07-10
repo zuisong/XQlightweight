@@ -5,6 +5,8 @@
     "build": "deno run -A npm:vite build --base=./"
   },
   "compilerOptions": {
+    "jsx": "react-jsx",
+    "jsxImportSource": "https://esm.sh/preact",
     "lib": [
       "deno.window",
       "dom",

@@ -1,4 +1,5 @@
-import { h, render } from "https://esm.sh/preact@10";
+/** @jsx h */
+import { h, render } from "https://esm.sh/preact@10?target=es2015";
 import { Board, THINKING_LEFT, THINKING_TOP } from "./board.ts";
 import {
   createOption,
@@ -9,8 +10,9 @@ import {
   retract_click,
   selMoveList,
 } from "./index.ts";
+
 h!;
-/** @jsx h */
+
 export function App() {
   return (
     <div>

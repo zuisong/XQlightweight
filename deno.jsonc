@@ -2,7 +2,7 @@
   "lock": false,
   "tasks": {
     "dev": "deno run -A npm:vite dev",
-    "build": "deno run -A npm:vite build --base=./"
+    "build": "deno run -A npm:vite build --base=./ --outDir docs"
   },
   "compilerOptions": {
     "jsxFactory": "h",

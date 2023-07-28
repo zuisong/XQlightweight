@@ -114,15 +114,17 @@ class MoveSort {
                 if (this.mvHash > 0) {
                     return this.mvHash;
                 }
-                break
+            // No Break
 
+            // deno-lint-ignore no-fallthrough
             case PHASE_KILLER_1:
                 this.phase = PHASE_KILLER_2;
                 if (this.mvKiller1 != this.mvHash && this.mvKiller1 > 0 &&
                     this.pos.legalMove(this.mvKiller1)) {
                     return this.mvKiller1;
                 }
-                break
+            // No Break
+            // deno-lint-ignore no-fallthrough
 
             case PHASE_KILLER_2:
                 this.phase = PHASE_GEN_MOVES;
@@ -130,8 +132,8 @@ class MoveSort {
                     this.pos.legalMove(this.mvKiller2)) {
                     return this.mvKiller2;
                 }
-                break
-
+            // No Break
+            // deno-lint-ignore no-fallthrough
             case PHASE_GEN_MOVES:
                 this.phase = PHASE_REST;
                 this.mvs = this.pos.generateMoves(null);
@@ -141,19 +143,17 @@ class MoveSort {
                 }
                 shellSort(this.mvs, this.vls);
                 this.index = 0;
-                break
-
+            // No Break
             default:
-                break;
+                while (this.index < this.mvs.length) {
+                    const mv = this.mvs[this.index];
+                    this.index++;
+                    if (mv != this.mvHash && mv != this.mvKiller1 && mv != this.mvKiller2) {
+                        return mv;
+                    }
+                }
+        }
 
-        }
-        while (this.index < this.mvs.length) {
-            const mv = this.mvs[this.index];
-            this.index++;
-            if (mv != this.mvHash && mv != this.mvKiller1 && mv != this.mvKiller2) {
-                return mv;
-            }
-        }
         return 0;
     }
 }

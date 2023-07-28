@@ -1,7 +1,7 @@
 import { Board, RESULT_UNKNOWN } from "./board.ts"
 import { ASC, CHR, DST, FILE_LEFT, FILE_X, RANK_TOP, RANK_Y, SRC } from "./position.ts";
 
-const board = window.board
+const board = () => window.board
 
 export const selMoveMode = () => document.getElementById('selMoveMode')! as HTMLSelectElement
 export const selHandicap = () => document.getElementById('selHandicap')! as HTMLSelectElement
@@ -34,45 +34,45 @@ export function createOption(text: string, value: string) {
 }
 
 export function level_change() {
-    board.millis = Math.pow(10, selLevel().selectedIndex + 1);
+    board().millis = Math.pow(10, selLevel().selectedIndex + 1);
 }
 
 export function restart_click() {
     selMoveList().options.length = 1;
     selMoveList().selectedIndex = 0;
-    board.computer = 1 - selMoveMode().selectedIndex;
-    board.restart(STARTUP_FEN[selHandicap().selectedIndex]);
+    board().computer = 1 - selMoveMode().selectedIndex;
+    board().restart(STARTUP_FEN[selHandicap().selectedIndex]);
 }
 
 export function retract_click() {
-    for (let i = board.pos.mvList.length; i < selMoveList().options.length; i++) {
-        board.pos.makeMove(parseInt(selMoveList().options[i].value));
+    for (let i = board().pos.mvList.length; i < selMoveList().options.length; i++) {
+        board().pos.makeMove(parseInt(selMoveList().options[i].value));
     }
-    board.retract();
-    selMoveList().options.length = board.pos.mvList.length;
+    board().retract();
+    selMoveList().options.length = board().pos.mvList.length;
     selMoveList().selectedIndex = selMoveList().options.length - 1;
 }
 
 export function moveList_change() {
-    if (board.result === RESULT_UNKNOWN) {
+    if (board().result === RESULT_UNKNOWN) {
         selMoveList().selectedIndex = selMoveList().options.length - 1;
         return;
     }
-    const from = board.pos.mvList.length;
+    const from = board().pos.mvList.length;
     const to = selMoveList().selectedIndex;
     if (from === to + 1) {
         return;
     }
     if (from > to + 1) {
         for (let i = to + 1; i < from; i++) {
-            board.pos.undoMakeMove();
+            board().pos.undoMakeMove();
         }
     } else {
         for (let i = from; i <= to; i++) {
-            board.pos.makeMove(parseInt(selMoveList().options[i].value));
+            board().pos.makeMove(parseInt(selMoveList().options[i].value));
         }
     }
-    board.flushBoard();
+    board().flushBoard();
 }
 
 declare global {

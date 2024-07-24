@@ -26,7 +26,7 @@ import {
     BAN_VALUE,
     DST,
     HOME_HALF,
-    MATE_VALUE, Position,
+    MATE_VALUE, type Position,
     WIN_VALUE
 } from "./position.ts";
 

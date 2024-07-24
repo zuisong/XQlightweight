@@ -1,4 +1,4 @@
-import { Board, RESULT_UNKNOWN } from "./board.ts"
+import { type Board, RESULT_UNKNOWN } from "./board.ts"
 import { ASC, CHR, DST, FILE_LEFT, FILE_X, RANK_TOP, RANK_Y, SRC } from "./position.ts";
 
 const board = () => window.board
@@ -46,7 +46,7 @@ export function restart_click() {
 
 export function retract_click() {
     for (let i = board().pos.mvList.length; i < selMoveList().options.length; i++) {
-        board().pos.makeMove(parseInt(selMoveList().options[i].value));
+        board().pos.makeMove(Number.parseInt(selMoveList().options[i].value));
     }
     board().retract();
     selMoveList().options.length = board().pos.mvList.length;
@@ -69,7 +69,7 @@ export function moveList_change() {
         }
     } else {
         for (let i = from; i <= to; i++) {
-            board().pos.makeMove(parseInt(selMoveList().options[i].value));
+            board().pos.makeMove(Number.parseInt(selMoveList().options[i].value));
         }
     }
     board().flushBoard();

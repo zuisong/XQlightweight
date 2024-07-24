@@ -511,12 +511,12 @@ for (let i = 0; i < 14; i++) {
 rc4.nextLong();
 
 export class Position {
-    sdPlayer: number = 0
+    sdPlayer = 0
     squares: number[] = []
-    zobristKey: number = 0
-    zobristLock: number = 0
-    vlWhite: number = 0
-    vlBlack: number = 0
+    zobristKey = 0
+    zobristLock = 0
+    vlWhite = 0
+    vlBlack = 0
 
     mvList = [0];
     pcList = [0];
@@ -546,7 +546,7 @@ export class Position {
         this.distance = 0;
     }
 
-    addPiece(sq: number, pc: number, bDel: boolean = false) {
+    addPiece(sq: number, pc: number, bDel = false) {
         let pcAdjust;
         this.squares[sq] = bDel ? 0 : pc;
         if (pc < 16) {

@@ -24,6 +24,6 @@
     }
   },
   "files": {
-    "ignore": ["docs"]
+    "ignore": ["docs","dist","node_modules"]
   }
 }

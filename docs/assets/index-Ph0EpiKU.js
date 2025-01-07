@@ -1,3 +1,4 @@
+var __pow = Math.pow;
 import { render, h } from "https://esm.sh/preact@10?target=es2015";
 (function polyfill() {
   const relList = document.createElement("link").relList;
@@ -15512,10 +15513,10 @@ const PIECE_VALUE = [
   ]
 ];
 function IN_BOARD(sq) {
-  return IN_BOARD_[sq] != 0;
+  return IN_BOARD_[sq] !== 0;
 }
 function IN_FORT(sq) {
-  return IN_FORT_[sq] != 0;
+  return IN_FORT_[sq] !== 0;
 }
 function RANK_Y(sq) {
   return sq >> 4;
@@ -15539,13 +15540,13 @@ function SQUARE_FORWARD(sq, sd) {
   return sq - 16 + (sd << 5);
 }
 function KING_SPAN(sqSrc, sqDst) {
-  return LEGAL_SPAN[sqDst - sqSrc + 256] == 1;
+  return LEGAL_SPAN[sqDst - sqSrc + 256] === 1;
 }
 function ADVISOR_SPAN(sqSrc, sqDst) {
-  return LEGAL_SPAN[sqDst - sqSrc + 256] == 2;
+  return LEGAL_SPAN[sqDst - sqSrc + 256] === 2;
 }
 function BISHOP_SPAN(sqSrc, sqDst) {
-  return LEGAL_SPAN[sqDst - sqSrc + 256] == 3;
+  return LEGAL_SPAN[sqDst - sqSrc + 256] === 3;
 }
 function BISHOP_PIN(sqSrc, sqDst) {
   return sqSrc + sqDst >> 1;
@@ -15554,19 +15555,19 @@ function KNIGHT_PIN(sqSrc, sqDst) {
   return sqSrc + KNIGHT_PIN_[sqDst - sqSrc + 256];
 }
 function HOME_HALF(sq, sd) {
-  return (sq & 128) != sd << 7;
+  return (sq & 128) !== sd << 7;
 }
 function AWAY_HALF(sq, sd) {
-  return (sq & 128) == sd << 7;
+  return (sq & 128) === sd << 7;
 }
 function SAME_HALF(sqSrc, sqDst) {
-  return ((sqSrc ^ sqDst) & 128) == 0;
+  return ((sqSrc ^ sqDst) & 128) === 0;
 }
 function SAME_RANK(sqSrc, sqDst) {
-  return ((sqSrc ^ sqDst) & 240) == 0;
+  return ((sqSrc ^ sqDst) & 240) === 0;
 }
 function SAME_FILE(sqSrc, sqDst) {
-  return ((sqSrc ^ sqDst) & 15) == 0;
+  return ((sqSrc ^ sqDst) & 15) === 0;
 }
 function SIDE_TAG(sd) {
   return 8 + (sd << 3);
@@ -15648,7 +15649,8 @@ class RC4 {
     return n0 + (n1 << 8) + (n2 << 16) + (n3 << 24 & 4294967295);
   }
 }
-const PreGen_zobristKeyTable = [], PreGen_zobristLockTable = [];
+const PreGen_zobristKeyTable = [];
+const PreGen_zobristLockTable = [];
 const rc4 = new RC4([0]);
 const PreGen_zobristKeyPlayer = rc4.nextLong();
 rc4.nextLong();
@@ -15781,13 +15783,13 @@ class Position {
     let y = RANK_TOP;
     let x = FILE_LEFT;
     let index = 0;
-    if (index == fen.length) {
+    if (index === fen.length) {
       this.setIrrev();
       return;
     }
     let c = fen.charAt(index);
-    while (c != " ") {
-      if (c == "/") {
+    while (c !== " ") {
+      if (c === "/") {
         x = FILE_LEFT;
         y++;
         if (y > RANK_BOTTOM) {
@@ -15813,18 +15815,18 @@ class Position {
         }
       }
       index++;
-      if (index == fen.length) {
+      if (index === fen.length) {
         this.setIrrev();
         return;
       }
       c = fen.charAt(index);
     }
     index++;
-    if (index == fen.length) {
+    if (index === fen.length) {
       this.setIrrev();
       return;
     }
-    if (this.sdPlayer == (fen.charAt(index) == "b" ? 0 : 1)) {
+    if (this.sdPlayer === (fen.charAt(index) === "b" ? 0 : 1)) {
       this.changeSide();
     }
     this.setIrrev();
@@ -15850,7 +15852,7 @@ class Position {
       }
       fen += "/";
     }
-    return fen.substring(0, fen.length - 1) + (this.sdPlayer == 0 ? " w" : " b");
+    return fen.substring(0, fen.length - 1) + (this.sdPlayer === 0 ? " w" : " b");
   }
   generateMoves(vls) {
     const mvs = [];
@@ -15858,7 +15860,7 @@ class Position {
     const pcOppSide = OPP_SIDE_TAG(this.sdPlayer);
     for (let sqSrc = 0; sqSrc < 256; sqSrc++) {
       const pcSrc = this.squares[sqSrc];
-      if ((pcSrc & pcSelfSide) == 0) {
+      if ((pcSrc & pcSelfSide) === 0) {
         continue;
       }
       switch (pcSrc - pcSelfSide) {
@@ -15870,10 +15872,10 @@ class Position {
             }
             const pcDst = this.squares[sqDst];
             if (vls == null) {
-              if ((pcDst & pcSelfSide) == 0) {
+              if ((pcDst & pcSelfSide) === 0) {
                 mvs.push(MOVE(sqSrc, sqDst));
               }
-            } else if ((pcDst & pcOppSide) != 0) {
+            } else if ((pcDst & pcOppSide) !== 0) {
               mvs.push(MOVE(sqSrc, sqDst));
               vls.push(MVV_LVA(pcDst, 5));
             }
@@ -15887,10 +15889,10 @@ class Position {
             }
             const pcDst = this.squares[sqDst];
             if (vls == null) {
-              if ((pcDst & pcSelfSide) == 0) {
+              if ((pcDst & pcSelfSide) === 0) {
                 mvs.push(MOVE(sqSrc, sqDst));
               }
-            } else if ((pcDst & pcOppSide) != 0) {
+            } else if ((pcDst & pcOppSide) !== 0) {
               mvs.push(MOVE(sqSrc, sqDst));
               vls.push(MVV_LVA(pcDst, 1));
             }
@@ -15899,16 +15901,16 @@ class Position {
         case PIECE_BISHOP:
           for (let i = 0; i < 4; i++) {
             let sqDst = sqSrc + ADVISOR_DELTA[i];
-            if (!(IN_BOARD(sqDst) && HOME_HALF(sqDst, this.sdPlayer) && this.squares[sqDst] == 0)) {
+            if (!(IN_BOARD(sqDst) && HOME_HALF(sqDst, this.sdPlayer) && this.squares[sqDst] === 0)) {
               continue;
             }
             sqDst += ADVISOR_DELTA[i];
             const pcDst = this.squares[sqDst];
             if (vls == null) {
-              if ((pcDst & pcSelfSide) == 0) {
+              if ((pcDst & pcSelfSide) === 0) {
                 mvs.push(MOVE(sqSrc, sqDst));
               }
-            } else if ((pcDst & pcOppSide) != 0) {
+            } else if ((pcDst & pcOppSide) !== 0) {
               mvs.push(MOVE(sqSrc, sqDst));
               vls.push(MVV_LVA(pcDst, 1));
             }
@@ -15927,10 +15929,10 @@ class Position {
               }
               const pcDst = this.squares[sqDst];
               if (vls == null) {
-                if ((pcDst & pcSelfSide) == 0) {
+                if ((pcDst & pcSelfSide) === 0) {
                   mvs.push(MOVE(sqSrc, sqDst));
                 }
-              } else if ((pcDst & pcOppSide) != 0) {
+              } else if ((pcDst & pcOppSide) !== 0) {
                 mvs.push(MOVE(sqSrc, sqDst));
                 vls.push(MVV_LVA(pcDst, 1));
               }
@@ -15943,12 +15945,12 @@ class Position {
             let sqDst = sqSrc + delta;
             while (IN_BOARD(sqDst)) {
               const pcDst = this.squares[sqDst];
-              if (pcDst == 0) {
+              if (pcDst === 0) {
                 if (vls == null) {
                   mvs.push(MOVE(sqSrc, sqDst));
                 }
               } else {
-                if ((pcDst & pcOppSide) != 0) {
+                if ((pcDst & pcOppSide) !== 0) {
                   mvs.push(MOVE(sqSrc, sqDst));
                   if (vls != null) {
                     vls.push(MVV_LVA(pcDst, 4));
@@ -15966,7 +15968,7 @@ class Position {
             let sqDst = sqSrc + delta;
             while (IN_BOARD(sqDst)) {
               const pcDst = this.squares[sqDst];
-              if (pcDst == 0) {
+              if (pcDst === 0) {
                 if (vls == null) {
                   mvs.push(MOVE(sqSrc, sqDst));
                 }
@@ -15979,7 +15981,7 @@ class Position {
             while (IN_BOARD(sqDst)) {
               const pcDst = this.squares[sqDst];
               if (pcDst > 0) {
-                if ((pcDst & pcOppSide) != 0) {
+                if ((pcDst & pcOppSide) !== 0) {
                   mvs.push(MOVE(sqSrc, sqDst));
                   if (vls != null) {
                     vls.push(MVV_LVA(pcDst, 4));
@@ -15999,7 +16001,7 @@ class Position {
               if ((pcDst & pcSelfSide) === 0) {
                 mvs.push(MOVE(sqSrc, sqDst));
               }
-            } else if ((pcDst & pcOppSide) != 0) {
+            } else if ((pcDst & pcOppSide) !== 0) {
               mvs.push(MOVE(sqSrc, sqDst));
               vls.push(MVV_LVA(pcDst, 2));
             }
@@ -16010,10 +16012,10 @@ class Position {
               if (IN_BOARD(sqDst)) {
                 const pcDst = this.squares[sqDst];
                 if (vls == null) {
-                  if ((pcDst & pcSelfSide) == 0) {
+                  if ((pcDst & pcSelfSide) === 0) {
                     mvs.push(MOVE(sqSrc, sqDst));
                   }
-                } else if ((pcDst & pcOppSide) != 0) {
+                } else if ((pcDst & pcOppSide) !== 0) {
                   mvs.push(MOVE(sqSrc, sqDst));
                   vls.push(MVV_LVA(pcDst, 2));
                 }
@@ -16030,12 +16032,12 @@ class Position {
     const sqSrc = SRC(mv);
     const pcSrc = this.squares[sqSrc];
     const pcSelfSide = SIDE_TAG(this.sdPlayer);
-    if ((pcSrc & pcSelfSide) == 0) {
+    if ((pcSrc & pcSelfSide) === 0) {
       return false;
     }
     const sqDst = DST(mv);
     const pcDst = this.squares[sqDst];
-    if ((pcDst & pcSelfSide) != 0) {
+    if ((pcDst & pcSelfSide) !== 0) {
       return false;
     }
     switch (pcSrc - pcSelfSide) {
@@ -16044,10 +16046,10 @@ class Position {
       case PIECE_ADVISOR:
         return IN_FORT(sqDst) && ADVISOR_SPAN(sqSrc, sqDst);
       case PIECE_BISHOP:
-        return SAME_HALF(sqSrc, sqDst) && BISHOP_SPAN(sqSrc, sqDst) && this.squares[BISHOP_PIN(sqSrc, sqDst)] == 0;
+        return SAME_HALF(sqSrc, sqDst) && BISHOP_SPAN(sqSrc, sqDst) && this.squares[BISHOP_PIN(sqSrc, sqDst)] === 0;
       case PIECE_KNIGHT: {
         const sqPin_1 = KNIGHT_PIN(sqSrc, sqDst);
-        return sqPin_1 != sqSrc && this.squares[sqPin_1] == 0;
+        return sqPin_1 !== sqSrc && this.squares[sqPin_1] === 0;
       }
       case PIECE_ROOK:
       case PIECE_CANNON: {
@@ -16060,26 +16062,26 @@ class Position {
           return false;
         }
         let sqPin = sqSrc + delta;
-        while (sqPin != sqDst && this.squares[sqPin] == 0) {
+        while (sqPin !== sqDst && this.squares[sqPin] === 0) {
           sqPin += delta;
         }
-        if (sqPin == sqDst) {
-          return pcDst == 0 || pcSrc - pcSelfSide == PIECE_ROOK;
+        if (sqPin === sqDst) {
+          return pcDst === 0 || pcSrc - pcSelfSide === PIECE_ROOK;
         }
-        if (pcDst == 0 || pcSrc - pcSelfSide != PIECE_CANNON) {
+        if (pcDst === 0 || pcSrc - pcSelfSide !== PIECE_CANNON) {
           return false;
         }
         sqPin += delta;
-        while (sqPin != sqDst && this.squares[sqPin] == 0) {
+        while (sqPin !== sqDst && this.squares[sqPin] === 0) {
           sqPin += delta;
         }
-        return sqPin == sqDst;
+        return sqPin === sqDst;
       }
       case PIECE_PAWN:
-        if (AWAY_HALF(sqDst, this.sdPlayer) && (sqDst == sqSrc - 1 || sqDst == sqSrc + 1)) {
+        if (AWAY_HALF(sqDst, this.sdPlayer) && (sqDst === sqSrc - 1 || sqDst === sqSrc + 1)) {
           return true;
         }
-        return sqDst == SQUARE_FORWARD(sqSrc, this.sdPlayer);
+        return sqDst === SQUARE_FORWARD(sqSrc, this.sdPlayer);
       default:
         return false;
     }
@@ -16088,24 +16090,24 @@ class Position {
     const pcSelfSide = SIDE_TAG(this.sdPlayer);
     const pcOppSide = OPP_SIDE_TAG(this.sdPlayer);
     for (let sqSrc = 0; sqSrc < 256; sqSrc++) {
-      if (this.squares[sqSrc] != pcSelfSide + PIECE_KING) {
+      if (this.squares[sqSrc] !== pcSelfSide + PIECE_KING) {
         continue;
       }
-      if (this.squares[SQUARE_FORWARD(sqSrc, this.sdPlayer)] == pcOppSide + PIECE_PAWN) {
+      if (this.squares[SQUARE_FORWARD(sqSrc, this.sdPlayer)] === pcOppSide + PIECE_PAWN) {
         return true;
       }
       for (let delta = -1; delta <= 1; delta += 2) {
-        if (this.squares[sqSrc + delta] == pcOppSide + PIECE_PAWN) {
+        if (this.squares[sqSrc + delta] === pcOppSide + PIECE_PAWN) {
           return true;
         }
       }
       for (let i = 0; i < 4; i++) {
-        if (this.squares[sqSrc + ADVISOR_DELTA[i]] != 0) {
+        if (this.squares[sqSrc + ADVISOR_DELTA[i]] !== 0) {
           continue;
         }
         for (let j = 0; j < 2; j++) {
           const pcDst = this.squares[sqSrc + KNIGHT_CHECK_DELTA[i][j]];
-          if (pcDst == pcOppSide + PIECE_KNIGHT) {
+          if (pcDst === pcOppSide + PIECE_KNIGHT) {
             return true;
           }
         }
@@ -16116,7 +16118,7 @@ class Position {
         while (IN_BOARD(sqDst)) {
           const pcDst = this.squares[sqDst];
           if (pcDst > 0) {
-            if (pcDst == pcOppSide + PIECE_ROOK || pcDst == pcOppSide + PIECE_KING) {
+            if (pcDst === pcOppSide + PIECE_ROOK || pcDst === pcOppSide + PIECE_KING) {
               return true;
             }
             break;
@@ -16127,7 +16129,7 @@ class Position {
         while (IN_BOARD(sqDst)) {
           const pcDst = this.squares[sqDst];
           if (pcDst > 0) {
-            if (pcDst == pcOppSide + PIECE_CANNON) {
+            if (pcDst === pcOppSide + PIECE_CANNON) {
               return true;
             }
             break;
@@ -16156,17 +16158,17 @@ class Position {
     return this.distance - BAN_VALUE;
   }
   drawValue() {
-    return (this.distance & 1) == 0 ? -DRAW_VALUE : DRAW_VALUE;
+    return (this.distance & 1) === 0 ? -DRAW_VALUE : DRAW_VALUE;
   }
   evaluate() {
-    const vl = (this.sdPlayer == 0 ? this.vlWhite - this.vlBlack : this.vlBlack - this.vlWhite) + ADVANCED_VALUE;
-    return vl == this.drawValue() ? vl - 1 : vl;
+    const vl = (this.sdPlayer === 0 ? this.vlWhite - this.vlBlack : this.vlBlack - this.vlWhite) + ADVANCED_VALUE;
+    return vl === this.drawValue() ? vl - 1 : vl;
   }
   nullOkay() {
-    return (this.sdPlayer == 0 ? this.vlWhite : this.vlBlack) > NULL_OKAY_MARGIN;
+    return (this.sdPlayer === 0 ? this.vlWhite : this.vlBlack) > NULL_OKAY_MARGIN;
   }
   nullSafe() {
-    return (this.sdPlayer == 0 ? this.vlWhite : this.vlBlack) > NULL_SAFE_MARGIN;
+    return (this.sdPlayer === 0 ? this.vlWhite : this.vlBlack) > NULL_SAFE_MARGIN;
   }
   inCheck() {
     return this.chkList[this.chkList.length - 1];
@@ -16175,8 +16177,8 @@ class Position {
     return this.pcList[this.pcList.length - 1] > 0;
   }
   repValue(vlRep) {
-    const vlReturn = ((vlRep & 2) == 0 ? 0 : this.banValue()) + ((vlRep & 4) == 0 ? 0 : -this.banValue());
-    return vlReturn == 0 ? this.drawValue() : vlReturn;
+    const vlReturn = ((vlRep & 2) === 0 ? 0 : this.banValue()) + ((vlRep & 4) === 0 ? 0 : -this.banValue());
+    return vlReturn === 0 ? this.drawValue() : vlReturn;
   }
   repStatus(recur_) {
     let recur = recur_;
@@ -16184,12 +16186,12 @@ class Position {
     let perpCheck = true;
     let oppPerpCheck = true;
     let index = this.mvList.length - 1;
-    while (this.mvList[index] > 0 && this.pcList[index] == 0) {
+    while (this.mvList[index] > 0 && this.pcList[index] === 0) {
       if (selfSide) {
         perpCheck = perpCheck && this.chkList[index];
-        if (this.keyList[index] == this.zobristKey) {
+        if (this.keyList[index] === this.zobristKey) {
           recur--;
-          if (recur == 0) {
+          if (recur === 0) {
             return 1 + (perpCheck ? 2 : 0) + (oppPerpCheck ? 4 : 0);
           }
         }
@@ -16210,13 +16212,13 @@ class Position {
         pos.addPiece(MIRROR_SQUARE(sq), pc);
       }
     }
-    if (this.sdPlayer == 1) {
+    if (this.sdPlayer === 1) {
       pos.changeSide();
     }
     return pos;
   }
   bookMove() {
-    if (typeof BOOK_DAT != "object" || BOOK_DAT.length == 0) {
+    if (typeof BOOK_DAT !== "object" || BOOK_DAT.length === 0) {
       return 0;
     }
     let mirror = false;
@@ -16231,13 +16233,14 @@ class Position {
       return 0;
     }
     index--;
-    while (index >= 0 && BOOK_DAT[index][0] == lock) {
+    while (index >= 0 && BOOK_DAT[index][0] === lock) {
       index--;
     }
-    const mvs = [], vls = [];
+    const mvs = [];
+    const vls = [];
     let value = 0;
     index++;
-    while (index < BOOK_DAT.length && BOOK_DAT[index][0] == lock) {
+    while (index < BOOK_DAT.length && BOOK_DAT[index][0] === lock) {
       let mv = BOOK_DAT[index][1];
       mv = mirror ? MIRROR_MOVE(mv) : mv;
       if (this.legalMove(mv)) {
@@ -16248,7 +16251,7 @@ class Position {
       }
       index++;
     }
-    if (value == 0) {
+    if (value === 0) {
       return 0;
     }
     value = Math.floor(Math.random() * value);
@@ -16314,10 +16317,10 @@ class MoveSort {
         }
         pos.undoMakeMove();
         this.mvs.push(mv);
-        this.vls.push(mv == mvHash ? 2147483647 : historyTable[pos.historyIndex(mv)]);
+        this.vls.push(mv === mvHash ? 2147483647 : historyTable[pos.historyIndex(mv)]);
       }
       shellSort(this.mvs, this.vls);
-      this.singleReply = this.mvs.length == 1;
+      this.singleReply = this.mvs.length === 1;
     } else {
       this.mvHash = mvHash;
       this.mvKiller1 = killerTable[pos.distance][0];
@@ -16333,12 +16336,12 @@ class MoveSort {
         }
       case PHASE_KILLER_1:
         this.phase = PHASE_KILLER_2;
-        if (this.mvKiller1 != this.mvHash && this.mvKiller1 > 0 && this.pos.legalMove(this.mvKiller1)) {
+        if (this.mvKiller1 !== this.mvHash && this.mvKiller1 > 0 && this.pos.legalMove(this.mvKiller1)) {
           return this.mvKiller1;
         }
       case PHASE_KILLER_2:
         this.phase = PHASE_GEN_MOVES;
-        if (this.mvKiller2 != this.mvHash && this.mvKiller2 > 0 && this.pos.legalMove(this.mvKiller2)) {
+        if (this.mvKiller2 !== this.mvHash && this.mvKiller2 > 0 && this.pos.legalMove(this.mvKiller2)) {
           return this.mvKiller2;
         }
       case PHASE_GEN_MOVES:
@@ -16354,7 +16357,7 @@ class MoveSort {
         while (this.index < this.mvs.length) {
           const mv = this.mvs[this.index];
           this.index++;
-          if (mv != this.mvHash && mv != this.mvKiller1 && mv != this.mvKiller2) {
+          if (mv !== this.mvHash && mv !== this.mvKiller1 && mv !== this.mvKiller2) {
             return mv;
           }
         }
@@ -16384,7 +16387,7 @@ class Search {
   }
   probeHash(vlAlpha, vlBeta, depth, mv) {
     const hash = this.getHashItem();
-    if (hash.zobristLock != this.pos.zobristLock) {
+    if (hash.zobristLock !== this.pos.zobristLock) {
       mv[0] = 0;
       return -MATE_VALUE;
     }
@@ -16402,16 +16405,16 @@ class Search {
       }
       hash.vl += this.pos.distance;
       mate = true;
-    } else if (hash.vl == this.pos.drawValue()) {
+    } else if (hash.vl === this.pos.drawValue()) {
       return -MATE_VALUE;
     }
     if (hash.depth < depth && !mate) {
       return -MATE_VALUE;
     }
-    if (hash.flag == HASH_BETA) {
+    if (hash.flag === HASH_BETA) {
       return hash.vl >= vlBeta ? hash.vl : -MATE_VALUE;
     }
-    if (hash.flag == HASH_ALPHA) {
+    if (hash.flag === HASH_ALPHA) {
       return hash.vl <= vlAlpha ? hash.vl : -MATE_VALUE;
     }
     return hash.vl;
@@ -16424,16 +16427,16 @@ class Search {
     hash.flag = flag;
     hash.depth = depth;
     if (vl > WIN_VALUE) {
-      if (mv == 0 && vl <= BAN_VALUE) {
+      if (mv === 0 && vl <= BAN_VALUE) {
         return;
       }
       hash.vl = vl + this.pos.distance;
     } else if (vl < -WIN_VALUE) {
-      if (mv == 0 && vl >= -BAN_VALUE) {
+      if (mv === 0 && vl >= -BAN_VALUE) {
         return;
       }
       hash.vl = vl - this.pos.distance;
-    } else if (vl == this.pos.drawValue() && mv == 0) {
+    } else if (vl === this.pos.drawValue() && mv === 0) {
       return;
     } else {
       hash.vl = vl;
@@ -16444,7 +16447,7 @@ class Search {
   setBestMove(mv, depth) {
     this.historyTable[this.pos.historyIndex(mv)] += depth * depth;
     const mvsKiller = this.killerTable[this.pos.distance];
-    if (mvsKiller[0] != mv) {
+    if (mvsKiller[0] !== mv) {
       mvsKiller[1] = mvsKiller[0];
       mvsKiller[0] = mv;
     }
@@ -16460,7 +16463,7 @@ class Search {
     if (vlRep > 0) {
       return this.pos.repValue(vlRep);
     }
-    if (this.pos.distance == LIMIT_DEPTH) {
+    if (this.pos.distance === LIMIT_DEPTH) {
       return this.pos.evaluate();
     }
     let vlBest = -MATE_VALUE;
@@ -16504,7 +16507,7 @@ class Search {
         vlAlpha = Math.max(vl, vlAlpha);
       }
     }
-    return vlBest == -MATE_VALUE ? this.pos.mateValue() : vlBest;
+    return vlBest === -MATE_VALUE ? this.pos.mateValue() : vlBest;
   }
   searchFull(vlAlpha_, vlBeta, depth, noNull) {
     let vlAlpha = vlAlpha_;
@@ -16525,7 +16528,7 @@ class Search {
     if (vl > -MATE_VALUE) {
       return vl;
     }
-    if (this.pos.distance == LIMIT_DEPTH) {
+    if (this.pos.distance === LIMIT_DEPTH) {
       return this.pos.evaluate();
     }
     if (!noNull && !this.pos.inCheck() && this.pos.nullOkay()) {
@@ -16540,13 +16543,16 @@ class Search {
     let vlBest = -MATE_VALUE;
     let mvBest = 0;
     const sort = new MoveSort(mvHash[0], this.pos, this.killerTable, this.historyTable);
-    let mv;
-    while ((mv = sort.next()) > 0) {
+    while (true) {
+      const mv = sort.next();
+      if (mv <= 0) {
+        break;
+      }
       if (!this.pos.makeMove(mv)) {
         continue;
       }
       const newDepth = this.pos.inCheck() || sort.singleReply ? depth : depth - 1;
-      if (vlBest == -MATE_VALUE) {
+      if (vlBest === -MATE_VALUE) {
         vl = -this.searchFull(-vlBeta, -vlAlpha, newDepth, false);
       } else {
         vl = -this.searchFull(-vlAlpha - 1, -vlAlpha, newDepth, false);
@@ -16569,7 +16575,7 @@ class Search {
         }
       }
     }
-    if (vlBest == -MATE_VALUE) {
+    if (vlBest === -MATE_VALUE) {
       return this.pos.mateValue();
     }
     this.recordHash(hashFlag, vlBest, depth, mvBest);
@@ -16581,14 +16587,17 @@ class Search {
   searchRoot(depth) {
     let vlBest = -MATE_VALUE;
     const sort = new MoveSort(this.mvResult, this.pos, this.killerTable, this.historyTable);
-    let mv;
-    while ((mv = sort.next()) > 0) {
+    while (true) {
+      const mv = sort.next();
+      if (mv <= 0) {
+        break;
+      }
       if (!this.pos.makeMove(mv)) {
         continue;
       }
       const newDepth = this.pos.inCheck() ? depth : depth - 1;
       let vl;
-      if (vlBest == -MATE_VALUE) {
+      if (vlBest === -MATE_VALUE) {
         vl = -this.searchFull(-MATE_VALUE, MATE_VALUE, newDepth, true);
       } else {
         vl = -this.searchFull(-vlBest - 1, -vlBest, newDepth, false);
@@ -16602,7 +16611,7 @@ class Search {
         this.mvResult = mv;
         if (vlBest > -WIN_VALUE && vlBest < WIN_VALUE) {
           vlBest += Math.floor(Math.random() * RANDOMNESS) - Math.floor(Math.random() * RANDOMNESS);
-          vlBest = vlBest == this.pos.drawValue() ? vlBest - 1 : vlBest;
+          vlBest = vlBest === this.pos.drawValue() ? vlBest - 1 : vlBest;
         }
       }
     }
@@ -16612,8 +16621,11 @@ class Search {
   searchUnique(vlBeta, depth) {
     const sort = new MoveSort(this.mvResult, this.pos, this.killerTable, this.historyTable);
     sort.next();
-    let mv;
-    while ((mv = sort.next()) > 0) {
+    while (true) {
+      const mv = sort.next();
+      if (mv <= 0) {
+        break;
+      }
       if (!this.pos.makeMove(mv)) {
         continue;
       }
@@ -16634,7 +16646,7 @@ class Search {
     this.mvResult = this.pos.bookMove();
     if (this.mvResult > 0) {
       this.pos.makeMove(this.mvResult);
-      if (this.pos.repStatus(3) == 0) {
+      if (this.pos.repStatus(3) === 0) {
         this.pos.undoMakeMove();
         return this.mvResult;
       }
@@ -16721,7 +16733,7 @@ function SQ_Y(sq) {
   return SQUARE_TOP + (RANK_Y(sq) - 3) * SQUARE_SIZE;
 }
 function MOVE_PX(src, dst, step) {
-  return Math.floor((src * step + dst * (MAX_STEP - step)) / MAX_STEP + 0.5) + "px";
+  return `${Math.floor((src * step + dst * (MAX_STEP - step)) / MAX_STEP + 0.5)}px`;
 }
 function alertDelay(message) {
   setTimeout(() => {
@@ -16758,9 +16770,9 @@ class Board {
     this.busy = false;
     const style = container2.style;
     style.position = "relative";
-    style.width = BOARD_WIDTH + "px";
-    style.height = BOARD_HEIGHT + "px";
-    style.background = "url(" + images + "board.jpg) no-repeat";
+    style.width = `${BOARD_WIDTH}px`;
+    style.height = `${BOARD_HEIGHT}px`;
+    style.background = `url(${images}board.jpg) no-repeat`;
     for (let sq = 0; sq < 256; sq++) {
       if (!IN_BOARD(sq)) {
         this.imgSquares.push(null);
@@ -16784,19 +16796,19 @@ class Board {
     if (!this.sound) {
       return;
     }
-    new Audio(this.sounds + soundFile + ".wav").play();
+    new Audio(`${this.sounds + soundFile}.wav`).play();
   }
   setSearch(hashLevel) {
-    this.search = hashLevel == 0 ? null : new Search(this.pos, hashLevel);
+    this.search = hashLevel === 0 ? null : new Search(this.pos, hashLevel);
   }
   flipped(sq) {
-    return this.computer == 0 ? SQUARE_FLIP(sq) : sq;
+    return this.computer === 0 ? SQUARE_FLIP(sq) : sq;
   }
   computerMove() {
-    return this.pos.sdPlayer == this.computer;
+    return this.pos.sdPlayer === this.computer;
   }
   computerLastMove() {
-    return 1 - this.pos.sdPlayer == this.computer;
+    return 1 - this.pos.sdPlayer === this.computer;
   }
   addMove(mv, computerMove) {
     if (!this.pos.legalMove(mv)) {
@@ -16821,10 +16833,10 @@ class Board {
     style.zIndex = "256";
     let step = MAX_STEP - 1;
     const timer = setInterval(() => {
-      if (step == 0) {
+      if (step === 0) {
         clearInterval(timer);
-        style.left = xSrc + "px";
-        style.top = ySrc + "px";
+        style.left = `${xSrc}px`;
+        style.top = `${ySrc}px`;
         style.zIndex = "0";
         this.postAddMove(mv, computerMove);
       } else {
@@ -16849,12 +16861,12 @@ class Board {
       const pc = SIDE_TAG(this.pos.sdPlayer) + PIECE_KING;
       let sqMate = 0;
       for (let sq = 0; sq < 256; sq++) {
-        if (this.pos.squares[sq] == pc) {
+        if (this.pos.squares[sq] === pc) {
           sqMate = sq;
           break;
         }
       }
-      if (!this.animated || sqMate == 0) {
+      if (!this.animated || sqMate === 0) {
         this.postMate(computerMove);
         return;
       }
@@ -16864,14 +16876,14 @@ class Board {
       const xMate = SQ_X(sqMate);
       let step = MAX_STEP;
       const timer = setInterval(() => {
-        if (step == 0) {
+        if (step === 0) {
           clearInterval(timer);
           style.left = `${xMate}px`;
           style.zIndex = "0";
-          this.imgSquares[sqMate].src = this.images + (this.pos.sdPlayer == 0 ? "r" : "b") + "km.gif";
+          this.imgSquares[sqMate].src = `${this.images + (this.pos.sdPlayer === 0 ? "r" : "b")}km.gif`;
           this.postMate(computerMove);
         } else {
-          style.left = xMate + ((step & 1) == 0 ? step : -step) * 2 + "px";
+          style.left = `${xMate + ((step & 1) === 0 ? step : -step) * 2}px`;
           step--;
         }
       }, 50);
@@ -16884,7 +16896,7 @@ class Board {
         this.playSound("draw");
         this.result = RESULT_DRAW;
         alertDelay("双方不变作和，辛苦了！");
-      } else if (computerMove == vlRep < 0) {
+      } else if (computerMove === vlRep < 0) {
         this.playSound("loss");
         this.result = RESULT_LOSS;
         alertDelay("长打作负，请不要气馁！");
@@ -16941,7 +16953,7 @@ class Board {
     this.response();
   }
   postAddMove2() {
-    if (typeof this.onAddMove == "function") {
+    if (typeof this.onAddMove === "function") {
       this.onAddMove();
     }
   }
@@ -16964,14 +16976,14 @@ class Board {
     }, 250);
   }
   clickSquare(sq_) {
-    if (this.busy || this.result != RESULT_UNKNOWN) {
+    if (this.busy || this.result !== RESULT_UNKNOWN) {
       return;
     }
     const sq = this.flipped(sq_);
     const pc = this.pos.squares[sq];
-    if ((pc & SIDE_TAG(this.pos.sdPlayer)) != 0) {
+    if ((pc & SIDE_TAG(this.pos.sdPlayer)) !== 0) {
       this.playSound("click");
-      if (this.mvLast != 0) {
+      if (this.mvLast !== 0) {
         this.drawSquare(SRC(this.mvLast), false);
         this.drawSquare(DST(this.mvLast), false);
       }
@@ -16986,14 +16998,14 @@ class Board {
   }
   drawSquare(sq, selected) {
     const img = this.imgSquares[this.flipped(sq)];
-    img.src = this.images + PIECE_NAME[this.pos.squares[sq]] + ".gif";
-    img.style.backgroundImage = selected ? "url(" + this.images + "oos.gif)" : "";
+    img.src = `${this.images + PIECE_NAME[this.pos.squares[sq]]}.gif`;
+    img.style.backgroundImage = selected ? `url(${this.images}oos.gif)` : "";
   }
   flushBoard() {
     this.mvLast = this.pos.mvList[this.pos.mvList.length - 1];
     for (let sq = 0; sq < 256; sq++) {
       if (IN_BOARD(sq)) {
-        this.drawSquare(sq, sq == SRC(this.mvLast) || sq == DST(this.mvLast));
+        this.drawSquare(sq, sq === SRC(this.mvLast) || sq === DST(this.mvLast));
       }
     }
   }
@@ -17042,7 +17054,7 @@ const STARTUP_FEN = [
 function move2Iccs(mv) {
   const sqSrc = SRC(mv);
   const sqDst = DST(mv);
-  return CHR(ASC("A") + FILE_X(sqSrc) - FILE_LEFT) + CHR(ASC("9") - RANK_Y(sqSrc) + RANK_TOP) + "-" + CHR(ASC("A") + FILE_X(sqDst) - FILE_LEFT) + CHR(ASC("9") - RANK_Y(sqDst) + RANK_TOP);
+  return `${CHR(ASC("A") + FILE_X(sqSrc) - FILE_LEFT) + CHR(ASC("9") - RANK_Y(sqSrc) + RANK_TOP)}-${CHR(ASC("A") + FILE_X(sqDst) - FILE_LEFT)}${CHR(ASC("9") - RANK_Y(sqDst) + RANK_TOP)}`;
 }
 function createOption(text, value) {
   const opt = document.createElement("option");
@@ -17052,7 +17064,7 @@ function createOption(text, value) {
   return opt;
 }
 function level_change() {
-  board$1().millis = Math.pow(10, selLevel().selectedIndex + 1);
+  board$1().millis = __pow(10, selLevel().selectedIndex + 1);
 }
 function restart_click() {
   selMoveList().options.length = 1;
@@ -17094,6 +17106,7 @@ function App() {
     "img",
     {
       id: "thinking",
+      alt: "thinking",
       src: "images/thinking.gif",
       style: {
         visibility: "hidden",
@@ -17125,7 +17138,9 @@ function App() {
       class: "checkbox",
       id: "chkAnimated",
       checked: true,
-      onClick: (e) => board.animated = e.currentTarget.checked
+      onClick: (e) => {
+        board.animated = e.currentTarget.checked;
+      }
     }
   ), /* @__PURE__ */ h("label", { for: "chkAnimated" }, "动画")), /* @__PURE__ */ h("div", null, /* @__PURE__ */ h(
     "input",
@@ -17157,9 +17172,9 @@ board.computer = 1;
 board.onAddMove = () => {
   const counter = board.pos.mvList.length >> 1;
   const space = counter > 99 ? "    " : "   ";
-  const text = (board.pos.sdPlayer == 0 ? space : (counter > 9 ? "" : " ") + counter + ".") + move2Iccs(board.mvLast);
-  const value = "" + board.mvLast;
+  const text = (board.pos.sdPlayer === 0 ? space : `${(counter > 9 ? "" : " ") + counter}.`) + move2Iccs(board.mvLast);
+  const value = `${board.mvLast}`;
   selMoveList().add(createOption(text, value));
   selMoveList().scrollTop = selMoveList().scrollHeight;
 };
-//# sourceMappingURL=index-AOKowkob.js.map
+//# sourceMappingURL=index-Ph0EpiKU.js.map

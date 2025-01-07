@@ -1,4 +1,4 @@
-import { IN_BOARD, MOVE, Position } from "./src/position.ts";
+import { IN_BOARD, MOVE, Position } from "./position.ts";
 
 const PUZZLE_LIST = [
   "9/2Cca4/3k1C3/4P1p2/4N1b2/4R1r2/4c1n2/3p1n3/2rNK4/9 w",
@@ -245,7 +245,10 @@ const PUZZLE_LIST = [
 
 Deno.test("test", () => {
   const pos = new Position();
-  let legal = 0, gened = 0, moved = 0, check = 0;
+  let legal = 0;
+  let gened = 0;
+  let moved = 0;
+  let check = 0;
   for (let i = 0; i < PUZZLE_LIST.length; i++) {
     pos.fromFen(PUZZLE_LIST[i]);
     for (let sqSrc = 0; sqSrc < 256; sqSrc++) {
@@ -267,5 +270,5 @@ Deno.test("test", () => {
     }
     gened += mvs.length;
   }
-  console.log(legal + "|" + gened + "|" + moved + "|" + check);
+  console.log(`${legal}|${gened}|${moved}|${check}`);
 })

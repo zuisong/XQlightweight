@@ -314,11 +314,11 @@ const PIECE_VALUE: number[][] = [
 ];
 
 export function IN_BOARD(sq: number) {
-    return IN_BOARD_[sq] != 0;
+    return IN_BOARD_[sq] !== 0;
 }
 
 export function IN_FORT(sq: number) {
-    return IN_FORT_[sq] != 0;
+    return IN_FORT_[sq] !== 0;
 }
 
 export function RANK_Y(sq: number) {
@@ -354,15 +354,15 @@ export function SQUARE_FORWARD(sq: number, sd: number) {
 }
 
 export function KING_SPAN(sqSrc: number, sqDst: number) {
-    return LEGAL_SPAN[sqDst - sqSrc + 256] == 1;
+    return LEGAL_SPAN[sqDst - sqSrc + 256] === 1;
 }
 
 export function ADVISOR_SPAN(sqSrc: number, sqDst: number) {
-    return LEGAL_SPAN[sqDst - sqSrc + 256] == 2;
+    return LEGAL_SPAN[sqDst - sqSrc + 256] === 2;
 }
 
 export function BISHOP_SPAN(sqSrc: number, sqDst: number) {
-    return LEGAL_SPAN[sqDst - sqSrc + 256] == 3;
+    return LEGAL_SPAN[sqDst - sqSrc + 256] === 3;
 }
 
 export function BISHOP_PIN(sqSrc: number, sqDst: number) {
@@ -374,23 +374,23 @@ export function KNIGHT_PIN(sqSrc: number, sqDst: number) {
 }
 
 export function HOME_HALF(sq: number, sd: number) {
-    return (sq & 0x80) != (sd << 7);
+    return (sq & 0x80) !== (sd << 7);
 }
 
 export function AWAY_HALF(sq: number, sd: number) {
-    return (sq & 0x80) == (sd << 7);
+    return (sq & 0x80) === (sd << 7);
 }
 
 export function SAME_HALF(sqSrc: number, sqDst: number) {
-    return ((sqSrc ^ sqDst) & 0x80) == 0;
+    return ((sqSrc ^ sqDst) & 0x80) === 0;
 }
 
 export function SAME_RANK(sqSrc: number, sqDst: number) {
-    return ((sqSrc ^ sqDst) & 0xf0) == 0;
+    return ((sqSrc ^ sqDst) & 0xf0) === 0;
 }
 
 export function SAME_FILE(sqSrc: number, sqDst: number) {
-    return ((sqSrc ^ sqDst) & 0x0f) == 0;
+    return ((sqSrc ^ sqDst) & 0x0f) === 0;
 }
 
 export function SIDE_TAG(sd: number) {
@@ -491,7 +491,8 @@ class RC4 {
     }
 }
 
-const PreGen_zobristKeyTable: number[][] = [], PreGen_zobristLockTable: number[][] = [];
+const PreGen_zobristKeyTable: number[][] = [];
+const PreGen_zobristLockTable: number[][] = [];
 
 const rc4 = new RC4([0]);
 const PreGen_zobristKeyPlayer = rc4.nextLong();
@@ -547,7 +548,7 @@ export class Position {
     }
 
     addPiece(sq: number, pc: number, bDel = false) {
-        let pcAdjust;
+        let pcAdjust: number;
         this.squares[sq] = bDel ? 0 : pc;
         if (pc < 16) {
             pcAdjust = pc - 8;
@@ -641,13 +642,13 @@ export class Position {
         let y = RANK_TOP;
         let x = FILE_LEFT;
         let index = 0;
-        if (index == fen.length) {
+        if (index === fen.length) {
             this.setIrrev();
             return;
         }
         let c = fen.charAt(index);
-        while (c != " ") {
-            if (c == "/") {
+        while (c !== " ") {
+            if (c === "/") {
                 x = FILE_LEFT;
                 y++;
                 if (y > RANK_BOTTOM) {
@@ -673,18 +674,18 @@ export class Position {
                 }
             }
             index++;
-            if (index == fen.length) {
+            if (index === fen.length) {
                 this.setIrrev();
                 return;
             }
             c = fen.charAt(index);
         }
         index++;
-        if (index == fen.length) {
+        if (index === fen.length) {
             this.setIrrev();
             return;
         }
-        if (this.sdPlayer == (fen.charAt(index) == "b" ? 0 : 1)) {
+        if (this.sdPlayer === (fen.charAt(index) === "b" ? 0 : 1)) {
             this.changeSide();
         }
         this.setIrrev();
@@ -712,7 +713,7 @@ export class Position {
             fen += "/";
         }
         return fen.substring(0, fen.length - 1) +
-            (this.sdPlayer == 0 ? " w" : " b");
+            (this.sdPlayer === 0 ? " w" : " b");
     }
 
     generateMoves(vls: number[] | null) {
@@ -721,7 +722,7 @@ export class Position {
         const pcOppSide = OPP_SIDE_TAG(this.sdPlayer);
         for (let sqSrc = 0; sqSrc < 256; sqSrc++) {
             const pcSrc = this.squares[sqSrc];
-            if ((pcSrc & pcSelfSide) == 0) {
+            if ((pcSrc & pcSelfSide) === 0) {
                 continue;
             }
             switch (pcSrc - pcSelfSide) {
@@ -733,10 +734,10 @@ export class Position {
                         }
                         const pcDst = this.squares[sqDst];
                         if (vls == null) {
-                            if ((pcDst & pcSelfSide) == 0) {
+                            if ((pcDst & pcSelfSide) === 0) {
                                 mvs.push(MOVE(sqSrc, sqDst));
                             }
-                        } else if ((pcDst & pcOppSide) != 0) {
+                        } else if ((pcDst & pcOppSide) !== 0) {
                             mvs.push(MOVE(sqSrc, sqDst));
                             vls.push(MVV_LVA(pcDst, 5));
                         }
@@ -750,10 +751,10 @@ export class Position {
                         }
                         const pcDst = this.squares[sqDst];
                         if (vls == null) {
-                            if ((pcDst & pcSelfSide) == 0) {
+                            if ((pcDst & pcSelfSide) === 0) {
                                 mvs.push(MOVE(sqSrc, sqDst));
                             }
-                        } else if ((pcDst & pcOppSide) != 0) {
+                        } else if ((pcDst & pcOppSide) !== 0) {
                             mvs.push(MOVE(sqSrc, sqDst));
                             vls.push(MVV_LVA(pcDst, 1));
                         }
@@ -763,16 +764,16 @@ export class Position {
                     for (let i = 0; i < 4; i++) {
                         let sqDst = sqSrc + ADVISOR_DELTA[i];
                         if (!(IN_BOARD(sqDst) && HOME_HALF(sqDst, this.sdPlayer) &&
-                            this.squares[sqDst] == 0)) {
+                            this.squares[sqDst] === 0)) {
                             continue;
                         }
                         sqDst += ADVISOR_DELTA[i];
                         const pcDst = this.squares[sqDst];
                         if (vls == null) {
-                            if ((pcDst & pcSelfSide) == 0) {
+                            if ((pcDst & pcSelfSide) === 0) {
                                 mvs.push(MOVE(sqSrc, sqDst));
                             }
-                        } else if ((pcDst & pcOppSide) != 0) {
+                        } else if ((pcDst & pcOppSide) !== 0) {
                             mvs.push(MOVE(sqSrc, sqDst));
                             vls.push(MVV_LVA(pcDst, 1));
                         }
@@ -791,10 +792,10 @@ export class Position {
                             }
                             const pcDst = this.squares[sqDst];
                             if (vls == null) {
-                                if ((pcDst & pcSelfSide) == 0) {
+                                if ((pcDst & pcSelfSide) === 0) {
                                     mvs.push(MOVE(sqSrc, sqDst));
                                 }
-                            } else if ((pcDst & pcOppSide) != 0) {
+                            } else if ((pcDst & pcOppSide) !== 0) {
                                 mvs.push(MOVE(sqSrc, sqDst));
                                 vls.push(MVV_LVA(pcDst, 1));
                             }
@@ -807,12 +808,12 @@ export class Position {
                         let sqDst = sqSrc + delta;
                         while (IN_BOARD(sqDst)) {
                             const pcDst = this.squares[sqDst];
-                            if (pcDst == 0) {
+                            if (pcDst === 0) {
                                 if (vls == null) {
                                     mvs.push(MOVE(sqSrc, sqDst));
                                 }
                             } else {
-                                if ((pcDst & pcOppSide) != 0) {
+                                if ((pcDst & pcOppSide) !== 0) {
                                     mvs.push(MOVE(sqSrc, sqDst));
                                     if (vls != null) {
                                         vls.push(MVV_LVA(pcDst, 4));
@@ -830,7 +831,7 @@ export class Position {
                         let sqDst = sqSrc + delta;
                         while (IN_BOARD(sqDst)) {
                             const pcDst = this.squares[sqDst];
-                            if (pcDst == 0) {
+                            if (pcDst === 0) {
                                 if (vls == null) {
                                     mvs.push(MOVE(sqSrc, sqDst));
                                 }
@@ -843,7 +844,7 @@ export class Position {
                         while (IN_BOARD(sqDst)) {
                             const pcDst = this.squares[sqDst];
                             if (pcDst > 0) {
-                                if ((pcDst & pcOppSide) != 0) {
+                                if ((pcDst & pcOppSide) !== 0) {
                                     mvs.push(MOVE(sqSrc, sqDst));
                                     if (vls != null) {
                                         vls.push(MVV_LVA(pcDst, 4));
@@ -863,7 +864,7 @@ export class Position {
                             if ((pcDst & pcSelfSide) === 0) {
                                 mvs.push(MOVE(sqSrc, sqDst));
                             }
-                        } else if ((pcDst & pcOppSide) != 0) {
+                        } else if ((pcDst & pcOppSide) !== 0) {
                             mvs.push(MOVE(sqSrc, sqDst));
                             vls.push(MVV_LVA(pcDst, 2));
                         }
@@ -874,10 +875,10 @@ export class Position {
                             if (IN_BOARD(sqDst)) {
                                 const pcDst = this.squares[sqDst];
                                 if (vls == null) {
-                                    if ((pcDst & pcSelfSide) == 0) {
+                                    if ((pcDst & pcSelfSide) === 0) {
                                         mvs.push(MOVE(sqSrc, sqDst));
                                     }
-                                } else if ((pcDst & pcOppSide) != 0) {
+                                } else if ((pcDst & pcOppSide) !== 0) {
                                     mvs.push(MOVE(sqSrc, sqDst));
                                     vls.push(MVV_LVA(pcDst, 2));
                                 }
@@ -895,13 +896,13 @@ export class Position {
         const sqSrc = SRC(mv);
         const pcSrc = this.squares[sqSrc];
         const pcSelfSide = SIDE_TAG(this.sdPlayer);
-        if ((pcSrc & pcSelfSide) == 0) {
+        if ((pcSrc & pcSelfSide) === 0) {
             return false;
         }
 
         const sqDst = DST(mv);
         const pcDst = this.squares[sqDst];
-        if ((pcDst & pcSelfSide) != 0) {
+        if ((pcDst & pcSelfSide) !== 0) {
             return false;
         }
 
@@ -912,14 +913,14 @@ export class Position {
                 return IN_FORT(sqDst) && ADVISOR_SPAN(sqSrc, sqDst);
             case PIECE_BISHOP:
                 return SAME_HALF(sqSrc, sqDst) && BISHOP_SPAN(sqSrc, sqDst) &&
-                    this.squares[BISHOP_PIN(sqSrc, sqDst)] == 0;
+                    this.squares[BISHOP_PIN(sqSrc, sqDst)] === 0;
             case PIECE_KNIGHT: {
                 const sqPin_1 = KNIGHT_PIN(sqSrc, sqDst);
-                return sqPin_1 != sqSrc && this.squares[sqPin_1] == 0;
+                return sqPin_1 !== sqSrc && this.squares[sqPin_1] === 0;
             }
             case PIECE_ROOK:
             case PIECE_CANNON: {
-                let delta;
+                let delta:number;
                 if (SAME_RANK(sqSrc, sqDst)) {
                     delta = (sqDst < sqSrc ? -1 : 1);
                 } else if (SAME_FILE(sqSrc, sqDst)) {
@@ -928,26 +929,26 @@ export class Position {
                     return false;
                 }
                 let sqPin = sqSrc + delta;
-                while (sqPin != sqDst && this.squares[sqPin] == 0) {
+                while (sqPin !== sqDst && this.squares[sqPin] === 0) {
                     sqPin += delta;
                 }
-                if (sqPin == sqDst) {
-                    return pcDst == 0 || pcSrc - pcSelfSide == PIECE_ROOK;
+                if (sqPin === sqDst) {
+                    return pcDst === 0 || pcSrc - pcSelfSide === PIECE_ROOK;
                 }
-                if (pcDst == 0 || pcSrc - pcSelfSide != PIECE_CANNON) {
+                if (pcDst === 0 || pcSrc - pcSelfSide !== PIECE_CANNON) {
                     return false;
                 }
                 sqPin += delta;
-                while (sqPin != sqDst && this.squares[sqPin] == 0) {
+                while (sqPin !== sqDst && this.squares[sqPin] === 0) {
                     sqPin += delta;
                 }
-                return sqPin == sqDst;
+                return sqPin === sqDst;
             }
             case PIECE_PAWN:
-                if (AWAY_HALF(sqDst, this.sdPlayer) && (sqDst == sqSrc - 1 || sqDst == sqSrc + 1)) {
+                if (AWAY_HALF(sqDst, this.sdPlayer) && (sqDst === sqSrc - 1 || sqDst === sqSrc + 1)) {
                     return true;
                 }
-                return sqDst == SQUARE_FORWARD(sqSrc, this.sdPlayer);
+                return sqDst === SQUARE_FORWARD(sqSrc, this.sdPlayer);
             default:
                 return false;
         }
@@ -957,24 +958,24 @@ export class Position {
         const pcSelfSide = SIDE_TAG(this.sdPlayer);
         const pcOppSide = OPP_SIDE_TAG(this.sdPlayer);
         for (let sqSrc = 0; sqSrc < 256; sqSrc++) {
-            if (this.squares[sqSrc] != pcSelfSide + PIECE_KING) {
+            if (this.squares[sqSrc] !== pcSelfSide + PIECE_KING) {
                 continue;
             }
-            if (this.squares[SQUARE_FORWARD(sqSrc, this.sdPlayer)] == pcOppSide + PIECE_PAWN) {
+            if (this.squares[SQUARE_FORWARD(sqSrc, this.sdPlayer)] === pcOppSide + PIECE_PAWN) {
                 return true;
             }
             for (let delta = -1; delta <= 1; delta += 2) {
-                if (this.squares[sqSrc + delta] == pcOppSide + PIECE_PAWN) {
+                if (this.squares[sqSrc + delta] === pcOppSide + PIECE_PAWN) {
                     return true;
                 }
             }
             for (let i = 0; i < 4; i++) {
-                if (this.squares[sqSrc + ADVISOR_DELTA[i]] != 0) {
+                if (this.squares[sqSrc + ADVISOR_DELTA[i]] !== 0) {
                     continue;
                 }
                 for (let j = 0; j < 2; j++) {
                     const pcDst = this.squares[sqSrc + KNIGHT_CHECK_DELTA[i][j]];
-                    if (pcDst == pcOppSide + PIECE_KNIGHT) {
+                    if (pcDst === pcOppSide + PIECE_KNIGHT) {
                         return true;
                     }
                 }
@@ -985,7 +986,7 @@ export class Position {
                 while (IN_BOARD(sqDst)) {
                     const pcDst = this.squares[sqDst];
                     if (pcDst > 0) {
-                        if (pcDst == pcOppSide + PIECE_ROOK || pcDst == pcOppSide + PIECE_KING) {
+                        if (pcDst === pcOppSide + PIECE_ROOK || pcDst === pcOppSide + PIECE_KING) {
                             return true;
                         }
                         break;
@@ -996,7 +997,7 @@ export class Position {
                 while (IN_BOARD(sqDst)) {
                     const pcDst = this.squares[sqDst];
                     if (pcDst > 0) {
-                        if (pcDst == pcOppSide + PIECE_CANNON) {
+                        if (pcDst === pcOppSide + PIECE_CANNON) {
                             return true;
                         }
                         break;
@@ -1028,21 +1029,21 @@ export class Position {
     }
 
     drawValue() {
-        return (this.distance & 1) == 0 ? -DRAW_VALUE : DRAW_VALUE;
+        return (this.distance & 1) === 0 ? -DRAW_VALUE : DRAW_VALUE;
     }
 
     evaluate() {
-        const vl = (this.sdPlayer == 0 ? this.vlWhite - this.vlBlack :
+        const vl = (this.sdPlayer === 0 ? this.vlWhite - this.vlBlack :
             this.vlBlack - this.vlWhite) + ADVANCED_VALUE;
-        return vl == this.drawValue() ? vl - 1 : vl;
+        return vl === this.drawValue() ? vl - 1 : vl;
     }
 
     nullOkay() {
-        return (this.sdPlayer == 0 ? this.vlWhite : this.vlBlack) > NULL_OKAY_MARGIN;
+        return (this.sdPlayer === 0 ? this.vlWhite : this.vlBlack) > NULL_OKAY_MARGIN;
     }
 
     nullSafe() {
-        return (this.sdPlayer == 0 ? this.vlWhite : this.vlBlack) > NULL_SAFE_MARGIN;
+        return (this.sdPlayer === 0 ? this.vlWhite : this.vlBlack) > NULL_SAFE_MARGIN;
     }
 
     inCheck() {
@@ -1054,9 +1055,9 @@ export class Position {
     }
 
     repValue(vlRep: number) {
-        const vlReturn = ((vlRep & 2) == 0 ? 0 : this.banValue()) +
-            ((vlRep & 4) == 0 ? 0 : -this.banValue());
-        return vlReturn == 0 ? this.drawValue() : vlReturn;
+        const vlReturn = ((vlRep & 2) === 0 ? 0 : this.banValue()) +
+            ((vlRep & 4) === 0 ? 0 : -this.banValue());
+        return vlReturn === 0 ? this.drawValue() : vlReturn;
     }
 
     repStatus(recur_: number) {
@@ -1065,12 +1066,12 @@ export class Position {
         let perpCheck = true;
         let oppPerpCheck = true;
         let index = this.mvList.length - 1;
-        while (this.mvList[index] > 0 && this.pcList[index] == 0) {
+        while (this.mvList[index] > 0 && this.pcList[index] === 0) {
             if (selfSide) {
                 perpCheck = perpCheck && this.chkList[index];
-                if (this.keyList[index] == this.zobristKey) {
+                if (this.keyList[index] === this.zobristKey) {
                     recur--;
-                    if (recur == 0) {
+                    if (recur === 0) {
                         return 1 + (perpCheck ? 2 : 0) + (oppPerpCheck ? 4 : 0);
                     }
                 }
@@ -1092,14 +1093,14 @@ export class Position {
                 pos.addPiece(MIRROR_SQUARE(sq), pc);
             }
         }
-        if (this.sdPlayer == 1) {
+        if (this.sdPlayer === 1) {
             pos.changeSide();
         }
         return pos;
     }
 
     bookMove() {
-        if (typeof BOOK_DAT != "object" || BOOK_DAT.length == 0) {
+        if (typeof BOOK_DAT !== "object" || BOOK_DAT.length === 0) {
             return 0;
         }
         let mirror = false;
@@ -1114,13 +1115,14 @@ export class Position {
             return 0;
         }
         index--;
-        while (index >= 0 && BOOK_DAT[index][0] == lock) {
+        while (index >= 0 && BOOK_DAT[index][0] === lock) {
             index--;
         }
-        const mvs = [], vls = [];
+        const mvs = [];
+        const vls = [];
         let value = 0;
         index++;
-        while (index < BOOK_DAT.length && BOOK_DAT[index][0] == lock) {
+        while (index < BOOK_DAT.length && BOOK_DAT[index][0] === lock) {
             let mv = BOOK_DAT[index][1];
             mv = (mirror ? MIRROR_MOVE(mv) : mv);
             if (this.legalMove(mv)) {
@@ -1131,7 +1133,7 @@ export class Position {
             }
             index++;
         }
-        if (value == 0) {
+        if (value === 0) {
             return 0;
         }
         value = Math.floor(Math.random() * value);

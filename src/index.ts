@@ -19,6 +19,7 @@ const STARTUP_FEN = [
 export function move2Iccs(mv: number): string {
     const sqSrc = SRC(mv);
     const sqDst = DST(mv);
+    // biome-ignore lint/style/useTemplate: <explanation>
     return CHR(ASC("A") + FILE_X(sqSrc) - FILE_LEFT) +
         CHR(ASC("9") - RANK_Y(sqSrc) + RANK_TOP) + "-" +
         CHR(ASC("A") + FILE_X(sqDst) - FILE_LEFT) +
@@ -34,7 +35,7 @@ export function createOption(text: string, value: string) {
 }
 
 export function level_change() {
-    board().millis = Math.pow(10, selLevel().selectedIndex + 1);
+    board().millis = 10 ** (selLevel().selectedIndex + 1);
 }
 
 export function restart_click() {

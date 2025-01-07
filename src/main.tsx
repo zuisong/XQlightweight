@@ -19,7 +19,7 @@ export function App() {
       <div style="text-align:center;font-size:28px;font-family:黑体,serif">
         象棋小巫师
       </div>
-      <div style="height:16px"></div>
+      <div style="height:16px" />
       <div style="display: flex;">
         <div style="text-align:center;white-space:nowrap">
         </div>
@@ -27,6 +27,7 @@ export function App() {
           <div id="container">
             <img
               id="thinking"
+              alt={"thinking"}
               src={"images/thinking.gif"}
               style={{
                 visibility: "hidden",
@@ -72,7 +73,7 @@ export function App() {
                 onClick={retract_click}
               />
             </div>
-            <div style="height:12px"></div>
+            <div style="height:12px" />
             <div class="label">电脑水平</div>
             <div>
               <select id="selLevel" size={3} onChange={level_change}>
@@ -81,14 +82,14 @@ export function App() {
                 <option value="2">专业</option>
               </select>
             </div>
-            <div style="height:12px"></div>
+            <div style="height:12px" />
             <div>
               <input
                 type="checkbox"
                 class="checkbox"
                 id="chkAnimated"
                 checked
-                onClick={(e) => board.animated = e.currentTarget.checked}
+                onClick={(e) => {board.animated = e.currentTarget.checked}}
               />
               <label for="chkAnimated">动画</label>
             </div>
@@ -102,7 +103,7 @@ export function App() {
               />
               <label for="chkSound">音效</label>
             </div>
-            <div style="height:60px"></div>
+            <div style="height:60px" />
             <div class="label">步骤</div>
             <div>
               <select
@@ -134,10 +135,10 @@ board.onAddMove = () => {
   const counter: number = board.pos.mvList.length >> 1;
   const space = counter > 99 ? "    " : "   ";
   const text =
-    (board.pos.sdPlayer == 0
+    (board.pos.sdPlayer === 0
       ? space
-      : ((counter > 9 ? "" : " ") + counter + ".")) + move2Iccs(board.mvLast);
-  const value = "" + board.mvLast;
+      : (`${(counter > 9 ? "" : " ") + counter}.`)) + move2Iccs(board.mvLast);
+  const value = `${board.mvLast}`;
   selMoveList().add(createOption(text, value));
   selMoveList().scrollTop = selMoveList().scrollHeight;
 };

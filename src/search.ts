@@ -95,11 +95,11 @@ class MoveSort {
                 }
                 pos.undoMakeMove();
                 this.mvs.push(mv);
-                this.vls.push(mv == mvHash ? 0x7fffffff :
+                this.vls.push(mv === mvHash ? 0x7fffffff :
                     historyTable[pos.historyIndex(mv)]);
             }
             shellSort(this.mvs, this.vls);
-            this.singleReply = this.mvs.length == 1;
+            this.singleReply = this.mvs.length === 1;
         } else {
             this.mvHash = mvHash;
             this.mvKiller1 = killerTable[pos.distance][0];
@@ -119,7 +119,7 @@ class MoveSort {
             // deno-lint-ignore no-fallthrough
             case PHASE_KILLER_1:
                 this.phase = PHASE_KILLER_2;
-                if (this.mvKiller1 != this.mvHash && this.mvKiller1 > 0 &&
+                if (this.mvKiller1 !== this.mvHash && this.mvKiller1 > 0 &&
                     this.pos.legalMove(this.mvKiller1)) {
                     return this.mvKiller1;
                 }
@@ -128,7 +128,7 @@ class MoveSort {
 
             case PHASE_KILLER_2:
                 this.phase = PHASE_GEN_MOVES;
-                if (this.mvKiller2 != this.mvHash && this.mvKiller2 > 0 &&
+                if (this.mvKiller2 !== this.mvHash && this.mvKiller2 > 0 &&
                     this.pos.legalMove(this.mvKiller2)) {
                     return this.mvKiller2;
                 }
@@ -148,7 +148,7 @@ class MoveSort {
                 while (this.index < this.mvs.length) {
                     const mv = this.mvs[this.index];
                     this.index++;
-                    if (mv != this.mvHash && mv != this.mvKiller1 && mv != this.mvKiller2) {
+                    if (mv !== this.mvHash && mv !== this.mvKiller1 && mv !== this.mvKiller2) {
                         return mv;
                     }
                 }
@@ -187,7 +187,7 @@ export class Search {
 
     probeHash(vlAlpha: number, vlBeta: number, depth: number, mv: number[]) {
         const hash = this.getHashItem();
-        if (hash.zobristLock != this.pos.zobristLock) {
+        if (hash.zobristLock !== this.pos.zobristLock) {
             mv[0] = 0;
             return -MATE_VALUE;
         }
@@ -205,16 +205,16 @@ export class Search {
             }
             hash.vl += this.pos.distance;
             mate = true;
-        } else if (hash.vl == this.pos.drawValue()) {
+        } else if (hash.vl === this.pos.drawValue()) {
             return -MATE_VALUE;
         }
         if (hash.depth < depth && !mate) {
             return -MATE_VALUE;
         }
-        if (hash.flag == HASH_BETA) {
+        if (hash.flag === HASH_BETA) {
             return (hash.vl >= vlBeta ? hash.vl : -MATE_VALUE);
         }
-        if (hash.flag == HASH_ALPHA) {
+        if (hash.flag === HASH_ALPHA) {
             return (hash.vl <= vlAlpha ? hash.vl : -MATE_VALUE);
         }
         return hash.vl;
@@ -228,16 +228,16 @@ export class Search {
         hash.flag = flag;
         hash.depth = depth;
         if (vl > WIN_VALUE) {
-            if (mv == 0 && vl <= BAN_VALUE) {
+            if (mv === 0 && vl <= BAN_VALUE) {
                 return;
             }
             hash.vl = vl + this.pos.distance;
         } else if (vl < -WIN_VALUE) {
-            if (mv == 0 && vl >= -BAN_VALUE) {
+            if (mv === 0 && vl >= -BAN_VALUE) {
                 return;
             }
             hash.vl = vl - this.pos.distance;
-        } else if (vl == this.pos.drawValue() && mv == 0) {
+        } else if (vl === this.pos.drawValue() && mv === 0) {
             return;
         } else {
             hash.vl = vl;
@@ -249,7 +249,7 @@ export class Search {
     setBestMove(mv: number, depth: number) {
         this.historyTable[this.pos.historyIndex(mv)] += depth * depth;
         const mvsKiller = this.killerTable[this.pos.distance];
-        if (mvsKiller[0] != mv) {
+        if (mvsKiller[0] !== mv) {
             mvsKiller[1] = mvsKiller[0];
             mvsKiller[0] = mv;
         }
@@ -266,7 +266,7 @@ export class Search {
         if (vlRep > 0) {
             return this.pos.repValue(vlRep);
         }
-        if (this.pos.distance == LIMIT_DEPTH) {
+        if (this.pos.distance === LIMIT_DEPTH) {
             return this.pos.evaluate();
         }
         let vlBest = -MATE_VALUE;
@@ -310,7 +310,7 @@ export class Search {
                 vlAlpha = Math.max(vl, vlAlpha);
             }
         }
-        return vlBest == -MATE_VALUE ? this.pos.mateValue() : vlBest;
+        return vlBest === -MATE_VALUE ? this.pos.mateValue() : vlBest;
     }
 
     searchFull(vlAlpha_: number, vlBeta: number, depth: number, noNull: boolean) {
@@ -332,7 +332,7 @@ export class Search {
         if (vl > -MATE_VALUE) {
             return vl;
         }
-        if (this.pos.distance == LIMIT_DEPTH) {
+        if (this.pos.distance === LIMIT_DEPTH) {
             return this.pos.evaluate();
         }
         if (!noNull && !this.pos.inCheck() && this.pos.nullOkay()) {
@@ -348,13 +348,17 @@ export class Search {
         let vlBest = -MATE_VALUE;
         let mvBest = 0;
         const sort = new MoveSort(mvHash[0], this.pos, this.killerTable, this.historyTable);
-        let mv;
-        while ((mv = sort.next()) > 0) {
+        while (true) {
+            const mv = sort.next()
+            if (mv <= 0) {
+                break;
+            }
+     
             if (!this.pos.makeMove(mv)) {
                 continue;
             }
             const newDepth = this.pos.inCheck() || sort.singleReply ? depth : depth - 1;
-            if (vlBest == -MATE_VALUE) {
+            if (vlBest === -MATE_VALUE) {
                 vl = -this.searchFull(-vlBeta, -vlAlpha, newDepth, false);
             } else {
                 vl = -this.searchFull(-vlAlpha - 1, -vlAlpha, newDepth, false);
@@ -377,7 +381,7 @@ export class Search {
                 }
             }
         }
-        if (vlBest == -MATE_VALUE) {
+        if (vlBest === -MATE_VALUE) {
             return this.pos.mateValue();
         }
         this.recordHash(hashFlag, vlBest, depth, mvBest);
@@ -390,14 +394,18 @@ export class Search {
     searchRoot(depth: number) {
         let vlBest = -MATE_VALUE;
         const sort = new MoveSort(this.mvResult, this.pos, this.killerTable, this.historyTable);
-        let mv;
-        while ((mv = sort.next()) > 0) {
+        
+        while (true) {
+            const mv = sort.next()
+            if (mv <= 0) {
+                break;
+            }
             if (!this.pos.makeMove(mv)) {
                 continue;
             }
             const newDepth = this.pos.inCheck() ? depth : depth - 1;
-            let vl;
-            if (vlBest == -MATE_VALUE) {
+            let vl:number;
+            if (vlBest === -MATE_VALUE) {
                 vl = -this.searchFull(-MATE_VALUE, MATE_VALUE, newDepth, true);
             } else {
                 vl = -this.searchFull(-vlBest - 1, -vlBest, newDepth, false);
@@ -412,7 +420,7 @@ export class Search {
                 if (vlBest > -WIN_VALUE && vlBest < WIN_VALUE) {
                     vlBest += Math.floor(Math.random() * RANDOMNESS) -
                         Math.floor(Math.random() * RANDOMNESS);
-                    vlBest = (vlBest == this.pos.drawValue() ? vlBest - 1 : vlBest);
+                    vlBest = (vlBest === this.pos.drawValue() ? vlBest - 1 : vlBest);
                 }
             }
         }
@@ -423,8 +431,11 @@ export class Search {
     searchUnique(vlBeta: number, depth: number) {
         const sort = new MoveSort(this.mvResult, this.pos, this.killerTable, this.historyTable);
         sort.next();
-        let mv;
-        while ((mv = sort.next()) > 0) {
+        while (true) {
+            const mv = sort.next()
+            if (mv <= 0) {
+                break;
+            }
             if (!this.pos.makeMove(mv)) {
                 continue;
             }
@@ -442,7 +453,7 @@ export class Search {
         this.mvResult = this.pos.bookMove();
         if (this.mvResult > 0) {
             this.pos.makeMove(this.mvResult);
-            if (this.pos.repStatus(3) == 0) {
+            if (this.pos.repStatus(3) === 0) {
                 this.pos.undoMakeMove();
                 return this.mvResult;
             }

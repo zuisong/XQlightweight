@@ -61,7 +61,7 @@ export function SQ_Y(sq: number) {
 }
 
 export function MOVE_PX(src: number, dst: number, step: number) {
-  return Math.floor((src * step + dst * (MAX_STEP - step)) / MAX_STEP + .5) + "px";
+  return `${Math.floor((src * step + dst * (MAX_STEP - step)) / MAX_STEP + .5)}px`;
 }
 
 export function alertDelay(message: string) {
@@ -105,9 +105,9 @@ export class Board {
 
     const style = container.style;
     style.position = "relative";
-    style.width = BOARD_WIDTH + "px";
-    style.height = BOARD_HEIGHT + "px";
-    style.background = "url(" + images + "board.jpg) no-repeat";
+    style.width = `${BOARD_WIDTH}px`;
+    style.height = `${BOARD_HEIGHT}px`;
+    style.background = `url(${images}board.jpg) no-repeat`;
     for (let sq = 0; sq < 256; sq++) {
       if (!IN_BOARD(sq)) {
         this.imgSquares.push(null);
@@ -135,23 +135,23 @@ export class Board {
     if (!this.sound) {
       return;
     }
-    new Audio(this.sounds + soundFile + ".wav").play();
+    new Audio(`${this.sounds + soundFile}.wav`).play();
   }
 
   setSearch(hashLevel: number) {
-    this.search = hashLevel == 0 ? null : new Search(this.pos, hashLevel);
+    this.search = hashLevel === 0 ? null : new Search(this.pos, hashLevel);
   }
 
   flipped(sq: number) {
-    return this.computer == 0 ? SQUARE_FLIP(sq) : sq;
+    return this.computer === 0 ? SQUARE_FLIP(sq) : sq;
   }
 
   computerMove() {
-    return this.pos.sdPlayer == this.computer;
+    return this.pos.sdPlayer === this.computer;
   }
 
   computerLastMove() {
-    return 1 - this.pos.sdPlayer == this.computer;
+    return 1 - this.pos.sdPlayer === this.computer;
   }
 
   addMove(mv: number, computerMove: boolean) {
@@ -178,10 +178,10 @@ export class Board {
     style.zIndex = '256';
     let step = MAX_STEP - 1;
     const timer = setInterval(() => {
-      if (step == 0) {
+      if (step === 0) {
         clearInterval(timer);
-        style.left = xSrc + "px";
-        style.top = ySrc + "px";
+        style.left = `${xSrc}px`;
+        style.top = `${ySrc}px`;
         style.zIndex = '0';
         this.postAddMove(mv, computerMove);
       } else {
@@ -209,12 +209,12 @@ export class Board {
       const pc = SIDE_TAG(this.pos.sdPlayer) + PIECE_KING;
       let sqMate = 0;
       for (let sq = 0; sq < 256; sq++) {
-        if (this.pos.squares[sq] == pc) {
+        if (this.pos.squares[sq] === pc) {
           sqMate = sq;
           break;
         }
       }
-      if (!this.animated || sqMate == 0) {
+      if (!this.animated || sqMate === 0) {
         this.postMate(computerMove);
         return;
       }
@@ -225,15 +225,15 @@ export class Board {
       const xMate = SQ_X(sqMate);
       let step = MAX_STEP;
       const timer = setInterval(() => {
-        if (step == 0) {
+        if (step === 0) {
           clearInterval(timer);
           style.left = `${xMate}px`;
           style.zIndex = '0';
-          this.imgSquares[sqMate]!.src = this.images +
-            (this.pos.sdPlayer == 0 ? "r" : "b") + "km.gif";
+          this.imgSquares[sqMate]!.src = `${this.images +
+            (this.pos.sdPlayer === 0 ? "r" : "b")}km.gif`;
           this.postMate(computerMove);
         } else {
-          style.left = (xMate + ((step & 1) == 0 ? step : -step) * 2) + "px";
+          style.left = `${xMate + ((step & 1) === 0 ? step : -step) * 2}px`;
           step--;
         }
       }, 50);
@@ -247,7 +247,7 @@ export class Board {
         this.playSound("draw");
         this.result = RESULT_DRAW;
         alertDelay("双方不变作和，辛苦了！");
-      } else if (computerMove == (vlRep < 0)) {
+      } else if (computerMove === (vlRep < 0)) {
         this.playSound("loss");
         this.result = RESULT_LOSS;
         alertDelay("长打作负，请不要气馁！");
@@ -308,7 +308,7 @@ export class Board {
   }
 
   postAddMove2() {
-    if (typeof this.onAddMove == "function") {
+    if (typeof this.onAddMove === "function") {
       this.onAddMove();
     }
   }
@@ -334,14 +334,14 @@ export class Board {
   }
 
   clickSquare(sq_: number) {
-    if (this.busy || this.result != RESULT_UNKNOWN) {
+    if (this.busy || this.result !== RESULT_UNKNOWN) {
       return;
     }
     const sq = this.flipped(sq_);
     const pc = this.pos.squares[sq];
-    if ((pc & SIDE_TAG(this.pos.sdPlayer)) != 0) {
+    if ((pc & SIDE_TAG(this.pos.sdPlayer)) !== 0) {
       this.playSound("click");
-      if (this.mvLast != 0) {
+      if (this.mvLast !== 0) {
         this.drawSquare(SRC(this.mvLast), false);
         this.drawSquare(DST(this.mvLast), false);
       }
@@ -357,15 +357,15 @@ export class Board {
 
   drawSquare(sq: number, selected: boolean) {
     const img = this.imgSquares[this.flipped(sq)]!;
-    img.src = this.images + PIECE_NAME[this.pos.squares[sq]] + ".gif";
-    img.style.backgroundImage = selected ? "url(" + this.images + "oos.gif)" : "";
+    img.src = `${this.images + PIECE_NAME[this.pos.squares[sq]]}.gif`;
+    img.style.backgroundImage = selected ? `url(${this.images}oos.gif)` : "";
   }
 
   flushBoard() {
     this.mvLast = this.pos.mvList[this.pos.mvList.length - 1];
     for (let sq = 0; sq < 256; sq++) {
       if (IN_BOARD(sq)) {
-        this.drawSquare(sq, sq == SRC(this.mvLast) || sq == DST(this.mvLast));
+        this.drawSquare(sq, sq === SRC(this.mvLast) || sq === DST(this.mvLast));
       }
     }
   }

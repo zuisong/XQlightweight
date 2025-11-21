@@ -6,7 +6,7 @@ const board = () => window.board
 export const selMoveMode = () => document.getElementById('selMoveMode')! as HTMLSelectElement
 export const selHandicap = () => document.getElementById('selHandicap')! as HTMLSelectElement
 export const selLevel = () => document.getElementById('selLevel')! as HTMLSelectElement
-export const selMoveList = () => document.getElementById("selMoveList")! as HTMLSelectElement
+export const selMoveList = () => document.getElementById("selMoveList")! as HTMLElement
 
 const STARTUP_FEN = [
     "rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C5C1/9/RNBAKABNR w",
@@ -19,19 +19,8 @@ const STARTUP_FEN = [
 export function move2Iccs(mv: number): string {
     const sqSrc = SRC(mv);
     const sqDst = DST(mv);
-    // biome-ignore lint/style/useTemplate: <explanation>
-    return CHR(ASC("A") + FILE_X(sqSrc) - FILE_LEFT) +
-        CHR(ASC("9") - RANK_Y(sqSrc) + RANK_TOP) + "-" +
-        CHR(ASC("A") + FILE_X(sqDst) - FILE_LEFT) +
-        CHR(ASC("9") - RANK_Y(sqDst) + RANK_TOP);
-}
-
-export function createOption(text: string, value: string) {
-    const opt: HTMLOptionElement = document.createElement("option");
-    opt.selected = true;
-    opt.value = value;
-    opt.innerHTML = text.replace(" ", "&nbsp;");
-    return opt;
+    return `${CHR(ASC("A") + FILE_X(sqSrc) - FILE_LEFT) +
+        CHR(ASC("9") - RANK_Y(sqSrc) + RANK_TOP)}-${CHR(ASC("A") + FILE_X(sqDst) - FILE_LEFT)}${CHR(ASC("9") - RANK_Y(sqDst) + RANK_TOP)}`;
 }
 
 export function level_change() {
@@ -39,41 +28,35 @@ export function level_change() {
 }
 
 export function restart_click() {
-    selMoveList().options.length = 1;
-    selMoveList().selectedIndex = 0;
+    const moveList = selMoveList();
+    while (moveList.firstChild) {
+        moveList.removeChild(moveList.firstChild);
+    }
+    const moveItem = document.createElement("li");
+    moveItem.className = "move-item selected";
+    moveItem.dataset.value = "0";
+    moveItem.dataset.index = "0";
+    moveItem.innerHTML = "=== 开始 ===";
+    moveList.appendChild(moveItem);
+
     board().computer = 1 - selMoveMode().selectedIndex;
     board().restart(STARTUP_FEN[selHandicap().selectedIndex]);
 }
 
 export function retract_click() {
-    for (let i = board().pos.mvList.length; i < selMoveList().options.length; i++) {
-        board().pos.makeMove(Number.parseInt(selMoveList().options[i].value));
+    const moveList = selMoveList();
+    for (let i = board().pos.mvList.length; i < moveList.children.length; i++) {
+        board().pos.makeMove(Number.parseInt(moveList.children[i].dataset.value!));
     }
     board().retract();
-    selMoveList().options.length = board().pos.mvList.length;
-    selMoveList().selectedIndex = selMoveList().options.length - 1;
-}
-
-export function moveList_change() {
-    if (board().result === RESULT_UNKNOWN) {
-        selMoveList().selectedIndex = selMoveList().options.length - 1;
-        return;
+    // Remove extra moves from the list
+    while (moveList.children.length > board().pos.mvList.length) {
+        moveList.removeChild(moveList.lastChild!);
     }
-    const from = board().pos.mvList.length;
-    const to = selMoveList().selectedIndex;
-    if (from === to + 1) {
-        return;
+    // Set the last move as selected
+    if (moveList.children.length > 0) {
+        moveList.lastChild!.classList.add('selected');
     }
-    if (from > to + 1) {
-        for (let i = to + 1; i < from; i++) {
-            board().pos.undoMakeMove();
-        }
-    } else {
-        for (let i = from; i <= to; i++) {
-            board().pos.makeMove(Number.parseInt(selMoveList().options[i].value));
-        }
-    }
-    board().flushBoard();
 }
 
 declare global {

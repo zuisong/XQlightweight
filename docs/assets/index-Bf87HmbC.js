@@ -2,36 +2,28 @@ var __pow = Math.pow;
 import { render, h } from "https://esm.sh/preact@10?target=es2015";
 (function polyfill() {
   const relList = document.createElement("link").relList;
-  if (relList && relList.supports && relList.supports("modulepreload")) {
-    return;
-  }
-  for (const link of document.querySelectorAll('link[rel="modulepreload"]')) {
-    processPreload(link);
-  }
+  if (relList && relList.supports && relList.supports("modulepreload")) return;
+  for (const link of document.querySelectorAll('link[rel="modulepreload"]')) processPreload(link);
   new MutationObserver((mutations) => {
     for (const mutation of mutations) {
-      if (mutation.type !== "childList") {
-        continue;
-      }
-      for (const node of mutation.addedNodes) {
-        if (node.tagName === "LINK" && node.rel === "modulepreload")
-          processPreload(node);
-      }
+      if (mutation.type !== "childList") continue;
+      for (const node of mutation.addedNodes) if (node.tagName === "LINK" && node.rel === "modulepreload") processPreload(node);
     }
-  }).observe(document, { childList: true, subtree: true });
+  }).observe(document, {
+    childList: true,
+    subtree: true
+  });
   function getFetchOpts(link) {
     const fetchOpts = {};
     if (link.integrity) fetchOpts.integrity = link.integrity;
     if (link.referrerPolicy) fetchOpts.referrerPolicy = link.referrerPolicy;
-    if (link.crossOrigin === "use-credentials")
-      fetchOpts.credentials = "include";
+    if (link.crossOrigin === "use-credentials") fetchOpts.credentials = "include";
     else if (link.crossOrigin === "anonymous") fetchOpts.credentials = "omit";
     else fetchOpts.credentials = "same-origin";
     return fetchOpts;
   }
   function processPreload(link) {
-    if (link.ep)
-      return;
+    if (link.ep) return;
     link.ep = true;
     const fetchOpts = getFetchOpts(link);
     fetch(link.href, fetchOpts);
@@ -16334,16 +16326,22 @@ class MoveSort {
         if (this.mvHash > 0) {
           return this.mvHash;
         }
+      // No Break
+      // deno-lint-ignore no-fallthrough
       case PHASE_KILLER_1:
         this.phase = PHASE_KILLER_2;
         if (this.mvKiller1 !== this.mvHash && this.mvKiller1 > 0 && this.pos.legalMove(this.mvKiller1)) {
           return this.mvKiller1;
         }
+      // No Break
+      // deno-lint-ignore no-fallthrough
       case PHASE_KILLER_2:
         this.phase = PHASE_GEN_MOVES;
         if (this.mvKiller2 !== this.mvHash && this.mvKiller2 > 0 && this.pos.legalMove(this.mvKiller2)) {
           return this.mvKiller2;
         }
+      // No Break
+      // deno-lint-ignore no-fallthrough
       case PHASE_GEN_MOVES:
         this.phase = PHASE_REST;
         this.mvs = this.pos.generateMoves(null);
@@ -16353,6 +16351,7 @@ class MoveSort {
         }
         shellSort(this.mvs, this.vls);
         this.index = 0;
+      // No Break
       default:
         while (this.index < this.mvs.length) {
           const mv = this.mvs[this.index];
@@ -16687,7 +16686,7 @@ class Search {
     return this.allNodes / this.allMillis;
   }
 }
-const RESULT_UNKNOWN = 0;
+const RESULT_UNKNOWN$1 = 0;
 const RESULT_WIN = 1;
 const RESULT_DRAW = 2;
 const RESULT_LOSS = 3;
@@ -16751,7 +16750,7 @@ class Board {
     this.mvLast = 0;
     this.millis = 0;
     this.computer = -1;
-    this.result = RESULT_UNKNOWN;
+    this.result = RESULT_UNKNOWN$1;
     this.busy = false;
     this.onAddMove = void 0;
     this.images = images;
@@ -16766,7 +16765,7 @@ class Board {
     this.mvLast = 0;
     this.millis = 0;
     this.computer = -1;
-    this.result = RESULT_UNKNOWN;
+    this.result = RESULT_UNKNOWN$1;
     this.busy = false;
     const style = container2.style;
     style.position = "relative";
@@ -16976,7 +16975,7 @@ class Board {
     }, 250);
   }
   clickSquare(sq_) {
-    if (this.busy || this.result !== RESULT_UNKNOWN) {
+    if (this.busy || this.result !== RESULT_UNKNOWN$1) {
       return;
     }
     const sq = this.flipped(sq_);
@@ -17013,7 +17012,7 @@ class Board {
     if (this.busy) {
       return;
     }
-    this.result = RESULT_UNKNOWN;
+    this.result = RESULT_UNKNOWN$1;
     this.pos.fromFen(fen);
     this.flushBoard();
     this.playSound("newgame");
@@ -17023,7 +17022,7 @@ class Board {
     if (this.busy) {
       return;
     }
-    this.result = RESULT_UNKNOWN;
+    this.result = RESULT_UNKNOWN$1;
     if (this.pos.mvList.length > 1) {
       this.pos.undoMakeMove();
     }
@@ -17056,53 +17055,38 @@ function move2Iccs(mv) {
   const sqDst = DST(mv);
   return `${CHR(ASC("A") + FILE_X(sqSrc) - FILE_LEFT) + CHR(ASC("9") - RANK_Y(sqSrc) + RANK_TOP)}-${CHR(ASC("A") + FILE_X(sqDst) - FILE_LEFT)}${CHR(ASC("9") - RANK_Y(sqDst) + RANK_TOP)}`;
 }
-function createOption(text, value) {
-  const opt = document.createElement("option");
-  opt.selected = true;
-  opt.value = value;
-  opt.innerHTML = text.replace(" ", "&nbsp;");
-  return opt;
-}
 function level_change() {
   board$1().millis = __pow(10, selLevel().selectedIndex + 1);
 }
 function restart_click() {
-  selMoveList().options.length = 1;
-  selMoveList().selectedIndex = 0;
+  const moveList = selMoveList();
+  while (moveList.firstChild) {
+    moveList.removeChild(moveList.firstChild);
+  }
+  const moveItem = document.createElement("li");
+  moveItem.className = "move-item selected";
+  moveItem.dataset.value = "0";
+  moveItem.dataset.index = "0";
+  moveItem.innerHTML = "=== 开始 ===";
+  moveList.appendChild(moveItem);
   board$1().computer = 1 - selMoveMode().selectedIndex;
   board$1().restart(STARTUP_FEN[selHandicap().selectedIndex]);
 }
 function retract_click() {
-  for (let i = board$1().pos.mvList.length; i < selMoveList().options.length; i++) {
-    board$1().pos.makeMove(Number.parseInt(selMoveList().options[i].value));
+  const moveList = selMoveList();
+  for (let i = board$1().pos.mvList.length; i < moveList.children.length; i++) {
+    board$1().pos.makeMove(Number.parseInt(moveList.children[i].dataset.value));
   }
   board$1().retract();
-  selMoveList().options.length = board$1().pos.mvList.length;
-  selMoveList().selectedIndex = selMoveList().options.length - 1;
-}
-function moveList_change() {
-  if (board$1().result === RESULT_UNKNOWN) {
-    selMoveList().selectedIndex = selMoveList().options.length - 1;
-    return;
+  while (moveList.children.length > board$1().pos.mvList.length) {
+    moveList.removeChild(moveList.lastChild);
   }
-  const from = board$1().pos.mvList.length;
-  const to = selMoveList().selectedIndex;
-  if (from === to + 1) {
-    return;
+  if (moveList.children.length > 0) {
+    moveList.lastChild.classList.add("selected");
   }
-  if (from > to + 1) {
-    for (let i = to + 1; i < from; i++) {
-      board$1().pos.undoMakeMove();
-    }
-  } else {
-    for (let i = from; i <= to; i++) {
-      board$1().pos.makeMove(Number.parseInt(selMoveList().options[i].value));
-    }
-  }
-  board$1().flushBoard();
 }
 function App() {
-  return /* @__PURE__ */ h("div", null, /* @__PURE__ */ h("div", { style: "text-align:center;font-size:28px;font-family:黑体,serif" }, "象棋小巫师"), /* @__PURE__ */ h("div", { style: "height:16px" }), /* @__PURE__ */ h("div", { style: "display: flex;" }, /* @__PURE__ */ h("div", { style: "text-align:center;white-space:nowrap" }), /* @__PURE__ */ h("span", { class: "td", style: "margin-right:10px" }, /* @__PURE__ */ h("div", { id: "container" }, /* @__PURE__ */ h(
+  return /* @__PURE__ */ h("div", { class: "app-container" }, /* @__PURE__ */ h("h1", { class: "title" }, "象棋小巫师"), /* @__PURE__ */ h("div", { class: "game-area" }, /* @__PURE__ */ h("div", { class: "game-board-container" }, /* @__PURE__ */ h("div", { id: "container" }, /* @__PURE__ */ h(
     "img",
     {
       id: "thinking",
@@ -17115,53 +17099,29 @@ function App() {
         top: THINKING_TOP
       }
     }
-  ))), /* @__PURE__ */ h("span", { class: "td", style: "vertical-align:top;width:120px;" }, /* @__PURE__ */ h("div", { style: "text-align:left" }, /* @__PURE__ */ h("div", { class: "label" }, "谁先走"), /* @__PURE__ */ h("div", null, /* @__PURE__ */ h("select", { id: "selMoveMode", size: 3 }, /* @__PURE__ */ h("option", { selected: true, value: "0" }, "我先走"), /* @__PURE__ */ h("option", { value: "1" }, "电脑先走"), /* @__PURE__ */ h("option", { value: "2" }, "不用电脑"))), /* @__PURE__ */ h("div", { class: "label" }, "先走让子"), /* @__PURE__ */ h("div", null, /* @__PURE__ */ h("select", { id: "selHandicap", style: "padding:0" }, /* @__PURE__ */ h("option", { selected: true, value: "0" }, "不让子"), /* @__PURE__ */ h("option", { value: "1" }, "让左马"), /* @__PURE__ */ h("option", { value: "2" }, "让双马"), /* @__PURE__ */ h("option", { value: "3" }, "让九子"))), /* @__PURE__ */ h("div", { style: "padding-top:2px" }, /* @__PURE__ */ h(
-    "input",
-    {
-      type: "button",
-      class: "button",
-      value: "重新开始",
-      onClick: restart_click
+  ))), /* @__PURE__ */ h("div", { class: "controls-sidebar" }, /* @__PURE__ */ h("div", { class: "control-card" }, /* @__PURE__ */ h("h2", { class: "card-title" }, "Game Controls"), /* @__PURE__ */ h("div", { class: "button-group" }, /* @__PURE__ */ h("button", { class: "button button-primary", onClick: restart_click }, "重新开始"), /* @__PURE__ */ h("button", { class: "button button-secondary", onClick: retract_click }, "悔棋"))), /* @__PURE__ */ h("div", { class: "control-card" }, /* @__PURE__ */ h("h2", { class: "card-title" }, "Settings"), /* @__PURE__ */ h("div", { class: "control-group select-group" }, /* @__PURE__ */ h("label", { for: "selMoveMode", class: "label" }, "谁先走"), /* @__PURE__ */ h("select", { id: "selMoveMode" }, /* @__PURE__ */ h("option", { selected: true, value: "0" }, "我先走"), /* @__PURE__ */ h("option", { value: "1" }, "电脑先走"), /* @__PURE__ */ h("option", { value: "2" }, "不用电脑"))), /* @__PURE__ */ h("div", { class: "control-group select-group" }, /* @__PURE__ */ h("label", { for: "selHandicap", class: "label" }, "先走让子"), /* @__PURE__ */ h("select", { id: "selHandicap" }, /* @__PURE__ */ h("option", { selected: true, value: "0" }, "不让子"), /* @__PURE__ */ h("option", { value: "1" }, "让左马"), /* @__PURE__ */ h("option", { value: "2" }, "让双马"), /* @__PURE__ */ h("option", { value: "3" }, "让九子"))), /* @__PURE__ */ h("div", { class: "control-group select-group" }, /* @__PURE__ */ h("label", { for: "selLevel", class: "label" }, "电脑水平"), /* @__PURE__ */ h("select", { id: "selLevel", onChange: level_change }, /* @__PURE__ */ h("option", { selected: true, value: "0" }, "入门"), /* @__PURE__ */ h("option", { value: "1" }, "业余"), /* @__PURE__ */ h("option", { value: "2" }, "专业")))), /* @__PURE__ */ h("div", { class: "control-card" }, /* @__PURE__ */ h("h2", { class: "card-title" }, "Preferences"), /* @__PURE__ */ h("div", { class: "toggle-group" }, /* @__PURE__ */ h("label", { for: "chkAnimated", class: "label" }, "动画"), /* @__PURE__ */ h("label", { class: "toggle-switch" }, /* @__PURE__ */ h("input", { type: "checkbox", id: "chkAnimated", checked: true, onClick: (e) => {
+    board.animated = e.currentTarget.checked;
+  } }), /* @__PURE__ */ h("span", { class: "slider" }))), /* @__PURE__ */ h("div", { class: "toggle-group" }, /* @__PURE__ */ h("label", { for: "chkSound", class: "label" }, "音效"), /* @__PURE__ */ h("label", { class: "toggle-switch" }, /* @__PURE__ */ h("input", { type: "checkbox", id: "chkSound", checked: true, onClick: (e) => board.setSound(e.currentTarget.checked) }), /* @__PURE__ */ h("span", { class: "slider" }))))), /* @__PURE__ */ h("div", { class: "control-card", style: "display: flex; flex-direction: column; height: 100%;" }, /* @__PURE__ */ h("h2", { class: "card-title" }, "Moves"), /* @__PURE__ */ h("div", { class: "move-list-container" }, /* @__PURE__ */ h("ul", { id: "selMoveList", class: "move-list" }, /* @__PURE__ */ h("li", { class: "move-item selected", "data-value": "0", "data-index": "0", onClick: handleMoveClick }, "=== 开始 ===")))), "      "));
+}
+const handleMoveClick = (e) => {
+  if (board.result !== RESULT_UNKNOWN) {
+    const from = board.pos.mvList.length;
+    const to = parseInt(e.currentTarget.dataset.index, 10);
+    if (from === to + 1) {
+      return;
     }
-  )), /* @__PURE__ */ h("div", { style: "padding-top:2px" }, /* @__PURE__ */ h(
-    "input",
-    {
-      type: "button",
-      class: "button",
-      value: "悔棋",
-      onClick: retract_click
-    }
-  )), /* @__PURE__ */ h("div", { style: "height:12px" }), /* @__PURE__ */ h("div", { class: "label" }, "电脑水平"), /* @__PURE__ */ h("div", null, /* @__PURE__ */ h("select", { id: "selLevel", size: 3, onChange: level_change }, /* @__PURE__ */ h("option", { selected: true, value: "0" }, "入门"), /* @__PURE__ */ h("option", { value: "1" }, "业余"), /* @__PURE__ */ h("option", { value: "2" }, "专业"))), /* @__PURE__ */ h("div", { style: "height:12px" }), /* @__PURE__ */ h("div", null, /* @__PURE__ */ h(
-    "input",
-    {
-      type: "checkbox",
-      class: "checkbox",
-      id: "chkAnimated",
-      checked: true,
-      onClick: (e) => {
-        board.animated = e.currentTarget.checked;
+    if (from > to + 1) {
+      for (let i = to + 1; i < from; i++) {
+        board.pos.undoMakeMove();
+      }
+    } else {
+      for (let i = from; i <= to; i++) {
+        board.pos.makeMove(Number(selMoveList().children[i].dataset.value));
       }
     }
-  ), /* @__PURE__ */ h("label", { for: "chkAnimated" }, "动画")), /* @__PURE__ */ h("div", null, /* @__PURE__ */ h(
-    "input",
-    {
-      type: "checkbox",
-      class: "checkbox",
-      id: "chkSound",
-      checked: true,
-      onClick: (e) => board.setSound(e.currentTarget.checked)
-    }
-  ), /* @__PURE__ */ h("label", { for: "chkSound" }, "音效")), /* @__PURE__ */ h("div", { style: "height:60px" }), /* @__PURE__ */ h("div", { class: "label" }, "步骤"), /* @__PURE__ */ h("div", null, /* @__PURE__ */ h(
-    "select",
-    {
-      id: "selMoveList",
-      size: 10,
-      style: "font-family:宋体,serif",
-      onChange: moveList_change
-    },
-    /* @__PURE__ */ h("option", { selected: true, value: "0" }, "=== 开始 ===")
-  ))))));
-}
+    board.flushBoard();
+  }
+};
 render(App(), document.body);
 const container = document.getElementById("container");
 const board = new Board(container, "images/", "sounds/");
@@ -17170,11 +17130,22 @@ board.setSearch(16);
 board.millis = 10;
 board.computer = 1;
 board.onAddMove = () => {
+  const moveList = selMoveList();
   const counter = board.pos.mvList.length >> 1;
   const space = counter > 99 ? "    " : "   ";
   const text = (board.pos.sdPlayer === 0 ? space : `${(counter > 9 ? "" : " ") + counter}.`) + move2Iccs(board.mvLast);
   const value = `${board.mvLast}`;
-  selMoveList().add(createOption(text, value));
-  selMoveList().scrollTop = selMoveList().scrollHeight;
+  const moveItem = document.createElement("li");
+  moveItem.className = "move-item";
+  moveItem.dataset.value = value;
+  moveItem.dataset.index = `${moveList.children.length}`;
+  moveItem.innerHTML = text.replace(" ", "&nbsp;");
+  moveItem.onclick = handleMoveClick;
+  if (moveList.children.length > 0) {
+    moveList.children[moveList.children.length - 1].classList.remove("selected");
+  }
+  moveItem.classList.add("selected");
+  moveList.appendChild(moveItem);
+  moveList.scrollTop = moveList.scrollHeight;
 };
-//# sourceMappingURL=index-Ph0EpiKU.js.map
+//# sourceMappingURL=index-Bf87HmbC.js.map

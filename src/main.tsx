@@ -1,6 +1,6 @@
 import './index.css';
-/** @jsx h */
-import { h, render } from "https://esm.sh/preact@10?target=es2015";
+
+import { h, render } from "preact";
 import { Board, RESULT_UNKNOWN, THINKING_LEFT, THINKING_TOP } from "./board.ts";
 import {
   level_change,

@@ -1,0 +1,22 @@
+{
+  "name": "xqlightweight",
+  "version": "1.0.0",
+  "author": "",
+  "main": "index.js",
+  "devDependencies": {
+    "@preact/preset-vite": "^2.10.2",
+    "@types/react": "^19.2.7",
+    "vite": "^7.2.6"
+  },
+  "keywords": [],
+  "license": "ISC",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "test": "bun test",
+    "check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "preact": "^10.27.2"
+  }
+}

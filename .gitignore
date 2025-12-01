@@ -2,3 +2,4 @@
 dist/
 .idea/
 .vite/
+node_modules/

@@ -1,0 +1,199 @@
+// src/engine/index.ts
+import { ASC, DST, MOVE, Position, SRC } from "./position.ts";
+import { Search } from "./search.ts";
+
+
+
+export class XiangQiEngine {
+    private _position: Position;
+    private _search: Search;
+    private _currentFen: string;
+
+    constructor() {
+        this._position = new Position();
+        this._search = new Search(this._position, 16); // Hash level 16 as a default
+        this._currentFen = "rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C5C1/9/RNBAKABNR w - - 0 1"; // Initial FEN
+        this._position.fromFen(this._currentFen);
+    }
+
+    loadFen(fen: string): boolean {
+        try {
+            this._position.fromFen(fen);
+            this._currentFen = fen;
+            // Re-initialize search after changing position
+            this._search = new Search(this._position, 16);
+            return true;
+        } catch (e) {
+            console.error("Invalid FEN:", e);
+            return false;
+        }
+    }
+
+    // UCCI move string to internal move number
+     ucciMoveToInternal(ucciMove: string): number {
+        if (ucciMove.length !== 4) {
+            return 0; // Invalid move format
+        }
+        const srcSquare = this.ucciToSquare(ucciMove.substring(0, 2));
+        const dstSquare = this.ucciToSquare(ucciMove.substring(2, 4));
+        return MOVE(srcSquare, dstSquare);
+    }
+
+    // Internal move number to UCCI move string
+    moveToString(move: number): string {
+        const sqSrc = SRC(move);
+        const sqDst = DST(move);
+        return `${this.squareToUcci(sqSrc)}${this.squareToUcci(sqDst)}`;
+    }
+
+    // Helper to convert internal square (0-255) to UCCI algebraic notation (e.g., 'a0', 'i9')
+    private squareToUcci(sq: number): string {
+        const file = (sq & 0xF) - 3; // Internal file 3-11 maps to 0-8 (a-i)
+        const rank = 9 - ((sq >> 4) - 3); // Internal rank 3-12 maps to 9-0
+        if (file < 0 || file > 8 || rank < 0 || rank > 9) {
+            return 'invalid'; // Should not happen with valid internal squares
+        }
+        return `${String.fromCharCode(ASC('a') + file)}${rank}`;
+    }
+
+    // Helper to convert UCCI algebraic notation (e.g., 'a0', 'i9') to internal square (0-255)
+    private ucciToSquare(ucciCoord: string): number {
+        if (ucciCoord.length !== 2) {
+            throw new Error(`Invalid UCCI coordinate format: ${ucciCoord}`);
+        }
+        const fileChar = ucciCoord.charCodeAt(0);
+        const rankChar = ucciCoord.charCodeAt(1);
+
+        const file = (fileChar - ASC('a')) + 3; // a-i maps to 3-11
+        const rank = 9 - (rankChar - ASC('0')) + 3; // 9-0 maps to 3-12
+
+        if (file < 3 || file > 11 || rank < 3 || rank > 12) {
+            throw new Error(`UCCI coordinate out of board bounds: ${ucciCoord}`);
+        }
+        return (rank << 4) + file;
+    }
+
+    // Public API for making moves (UCCI string)
+    makeMove(ucciMove: string): boolean {
+        const internalMove = this.ucciMoveToInternal(ucciMove);
+        if (internalMove === 0) {
+            console.error(`Invalid UCCI move string: ${ucciMove}`);
+            return false;
+        }
+
+        if (!this._position.legalMove(internalMove)) {
+            console.error(`Illegal move: ${ucciMove}`);
+            return false;
+        }
+        
+        const success = this._position.makeMove(internalMove);
+        if (success) {
+            this._search = new Search(this._position, 16);
+        }
+        return success;
+    }
+
+    // Public API for making moves (internal number) - for UI to use
+    makeInternalMove(mv: number): boolean {
+        if (!this._position.legalMove(mv)) {
+            return false;
+        }
+        const success = this._position.makeMove(mv);
+        if (success) {
+            this._search = new Search(this._position, 16);
+        }
+        return success;
+    }
+
+    // Public API for undoing moves (internal number) - for UI to use
+    undoInternalMove(): void {
+        this._position.undoMakeMove();
+        this._search = new Search(this._position, 16);
+    }
+
+    undoMove(): void { // This was used by UcciAdapter, keeping it for now
+        this._position.undoMakeMove();
+        this._search = new Search(this._position, 16);
+    }
+
+    findBestMove(depth: number = 6, timeLimitMillis: number = 2000): string {
+        const bestMove = this._search.searchMain(depth, timeLimitMillis);
+        if (bestMove === 0) {
+            return "nomove";
+        }
+        return this.moveToString(bestMove);
+    }
+
+    // --- Getters for internal state needed by UI ---
+    get squares(): number[] {
+        return this._position.squares;
+    }
+
+    get sdPlayer(): number {
+        return this._position.sdPlayer;
+    }
+
+    legalMove(mv: number): boolean {
+        return this._position.legalMove(mv);
+    }
+
+    isMate(): boolean {
+        return this._position.isMate();
+    }
+
+    inCheck(): boolean {
+        return this._position.inCheck();
+    }
+
+    repStatus(recur: number): number {
+        return this._position.repStatus(recur);
+    }
+
+    repValue(vlRep: number): number {
+        return this._position.repValue(vlRep);
+    }
+
+    captured(): boolean {
+        return this._position.captured();
+    }
+
+    getPieceListLength(): number {
+        return this._position.pcList.length;
+    }
+
+    lastMove(): number {
+        return this._position.mvList[this._position.mvList.length - 1];
+    }
+
+    getHistoryLength(): number {
+        return this._position.mvList.length;
+    }
+
+    getPiece(sq: number): number {
+        return this._position.squares[sq];
+    }
+
+    // Additional methods for UCCI protocol (already there)
+    getId(): { name: string; author: string } {
+        return {
+            name: "XQlightweight Engine",
+            author: "Morning Yellow, adapted by Gemini CLI"
+        };
+    }
+
+    isReady(): boolean {
+        return true;
+    }
+
+    getFen(): string {
+        return this._position.toFen();
+    }
+
+    getStatus(): { isMate: boolean; inCheck: boolean } {
+        return {
+            isMate: this._position.isMate(),
+            inCheck: this._position.inCheck()
+        };
+    }
+}
+

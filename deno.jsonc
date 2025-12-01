@@ -2,7 +2,8 @@
   "lock": false,
   "tasks": {
     "dev": "deno run -A npm:vite dev",
-    "build": "deno run -A npm:vite build --target=es2015 --emptyOutDir --base=./ --outDir=docs --minify=false --sourcemap=true"
+    "build": "deno run -A npm:vite build --target=es2015 --emptyOutDir --base=./ --outDir=docs --minify=false --sourcemap=true",
+    "engine:run": "deno run -A src/engine/ucci-adapter.ts"
   },
   "compilerOptions": {
     "jsxFactory": "h",

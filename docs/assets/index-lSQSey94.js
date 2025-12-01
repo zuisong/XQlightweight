@@ -16686,6 +16686,163 @@ class Search {
     return this.allNodes / this.allMillis;
   }
 }
+class XiangQiEngine {
+  constructor() {
+    this._position = new Position();
+    this._search = new Search(this._position, 16);
+    this._currentFen = "rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C5C1/9/RNBAKABNR w - - 0 1";
+    this._position.fromFen(this._currentFen);
+  }
+  loadFen(fen) {
+    try {
+      this._position.fromFen(fen);
+      this._currentFen = fen;
+      this._search = new Search(this._position, 16);
+      return true;
+    } catch (e) {
+      console.error("Invalid FEN:", e);
+      return false;
+    }
+  }
+  // UCCI move string to internal move number
+  ucciMoveToInternal(ucciMove) {
+    if (ucciMove.length !== 4) {
+      return 0;
+    }
+    const srcSquare = this.ucciToSquare(ucciMove.substring(0, 2));
+    const dstSquare = this.ucciToSquare(ucciMove.substring(2, 4));
+    return MOVE(srcSquare, dstSquare);
+  }
+  // Internal move number to UCCI move string
+  moveToString(move) {
+    const sqSrc = SRC(move);
+    const sqDst = DST(move);
+    return `${this.squareToUcci(sqSrc)}${this.squareToUcci(sqDst)}`;
+  }
+  // Helper to convert internal square (0-255) to UCCI algebraic notation (e.g., 'a0', 'i9')
+  squareToUcci(sq) {
+    const file = (sq & 15) - 3;
+    const rank = 9 - ((sq >> 4) - 3);
+    if (file < 0 || file > 8 || rank < 0 || rank > 9) {
+      return "invalid";
+    }
+    return `${String.fromCharCode(ASC("a") + file)}${rank}`;
+  }
+  // Helper to convert UCCI algebraic notation (e.g., 'a0', 'i9') to internal square (0-255)
+  ucciToSquare(ucciCoord) {
+    if (ucciCoord.length !== 2) {
+      throw new Error(`Invalid UCCI coordinate format: ${ucciCoord}`);
+    }
+    const fileChar = ucciCoord.charCodeAt(0);
+    const rankChar = ucciCoord.charCodeAt(1);
+    const file = fileChar - ASC("a") + 3;
+    const rank = 9 - (rankChar - ASC("0")) + 3;
+    if (file < 3 || file > 11 || rank < 3 || rank > 12) {
+      throw new Error(`UCCI coordinate out of board bounds: ${ucciCoord}`);
+    }
+    return (rank << 4) + file;
+  }
+  // Public API for making moves (UCCI string)
+  makeMove(ucciMove) {
+    const internalMove = this.ucciMoveToInternal(ucciMove);
+    if (internalMove === 0) {
+      console.error(`Invalid UCCI move string: ${ucciMove}`);
+      return false;
+    }
+    if (!this._position.legalMove(internalMove)) {
+      console.error(`Illegal move: ${ucciMove}`);
+      return false;
+    }
+    const success = this._position.makeMove(internalMove);
+    if (success) {
+      this._search = new Search(this._position, 16);
+    }
+    return success;
+  }
+  // Public API for making moves (internal number) - for UI to use
+  makeInternalMove(mv) {
+    if (!this._position.legalMove(mv)) {
+      return false;
+    }
+    const success = this._position.makeMove(mv);
+    if (success) {
+      this._search = new Search(this._position, 16);
+    }
+    return success;
+  }
+  // Public API for undoing moves (internal number) - for UI to use
+  undoInternalMove() {
+    this._position.undoMakeMove();
+    this._search = new Search(this._position, 16);
+  }
+  undoMove() {
+    this._position.undoMakeMove();
+    this._search = new Search(this._position, 16);
+  }
+  findBestMove(depth = 6, timeLimitMillis = 2e3) {
+    const bestMove = this._search.searchMain(depth, timeLimitMillis);
+    if (bestMove === 0) {
+      return "nomove";
+    }
+    return this.moveToString(bestMove);
+  }
+  // --- Getters for internal state needed by UI ---
+  get squares() {
+    return this._position.squares;
+  }
+  get sdPlayer() {
+    return this._position.sdPlayer;
+  }
+  legalMove(mv) {
+    return this._position.legalMove(mv);
+  }
+  isMate() {
+    return this._position.isMate();
+  }
+  inCheck() {
+    return this._position.inCheck();
+  }
+  repStatus(recur) {
+    return this._position.repStatus(recur);
+  }
+  repValue(vlRep) {
+    return this._position.repValue(vlRep);
+  }
+  captured() {
+    return this._position.captured();
+  }
+  getPieceListLength() {
+    return this._position.pcList.length;
+  }
+  lastMove() {
+    return this._position.mvList[this._position.mvList.length - 1];
+  }
+  getHistoryLength() {
+    return this._position.mvList.length;
+  }
+  getPiece(sq) {
+    return this._position.squares[sq];
+  }
+  // Additional methods for UCCI protocol (already there)
+  getId() {
+    return {
+      name: "XQlightweight Engine",
+      author: "Morning Yellow, adapted by Gemini CLI"
+    };
+  }
+  isReady() {
+    return true;
+  }
+  getFen() {
+    return this._position.toFen();
+  }
+  getStatus() {
+    return {
+      isMate: this._position.isMate(),
+      inCheck: this._position.inCheck()
+    };
+  }
+}
 const RESULT_UNKNOWN$1 = 0;
 const RESULT_WIN = 1;
 const RESULT_DRAW = 2;
@@ -16741,10 +16898,8 @@ function alertDelay(message) {
 }
 class Board {
   constructor(container2, images, sounds) {
-    this.pos = new Position();
     this.animated = true;
     this.sound = true;
-    this.search = null;
     this.imgSquares = [];
     this.sqSelected = 0;
     this.mvLast = 0;
@@ -16755,11 +16910,10 @@ class Board {
     this.onAddMove = void 0;
     this.images = images;
     this.sounds = sounds;
-    this.pos = new Position();
-    this.pos.fromFen("rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C5C1/9/RNBAKABNR w - - 0 1");
+    this.engine = new XiangQiEngine();
+    this.engine.loadFen("rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C5C1/9/RNBAKABNR w - - 0 1");
     this.animated = true;
     this.sound = true;
-    this.search = null;
     this.imgSquares = [];
     this.sqSelected = 0;
     this.mvLast = 0;
@@ -16797,23 +16951,24 @@ class Board {
     }
     new Audio(`${this.sounds + soundFile}.wav`).play();
   }
-  setSearch(hashLevel) {
-    this.search = hashLevel === 0 ? null : new Search(this.pos, hashLevel);
-  }
+  // setSearch is no longer needed as engine manages search internally
+  // setSearch(hashLevel: number) {
+  //   this.search = hashLevel === 0 ? null : new Search(this.pos, hashLevel);
+  // }
   flipped(sq) {
     return this.computer === 0 ? SQUARE_FLIP(sq) : sq;
   }
   computerMove() {
-    return this.pos.sdPlayer === this.computer;
+    return this.engine.sdPlayer === this.computer;
   }
   computerLastMove() {
-    return 1 - this.pos.sdPlayer === this.computer;
+    return 1 - this.engine.sdPlayer === this.computer;
   }
   addMove(mv, computerMove) {
-    if (!this.pos.legalMove(mv)) {
+    if (!this.engine.legalMove(mv)) {
       return;
     }
-    if (!this.pos.makeMove(mv)) {
+    if (!this.engine.makeInternalMove(mv)) {
       this.playSound("illegal");
       return;
     }
@@ -16854,13 +17009,13 @@ class Board {
     this.drawSquare(DST(mv), true);
     this.sqSelected = 0;
     this.mvLast = mv;
-    if (this.pos.isMate()) {
+    if (this.engine.isMate()) {
       this.playSound(computerMove ? "loss" : "win");
       this.result = computerMove ? RESULT_LOSS : RESULT_WIN;
-      const pc = SIDE_TAG(this.pos.sdPlayer) + PIECE_KING;
+      const pc = SIDE_TAG(this.engine.sdPlayer) + PIECE_KING;
       let sqMate = 0;
       for (let sq = 0; sq < 256; sq++) {
-        if (this.pos.squares[sq] === pc) {
+        if (this.engine.getPiece(sq) === pc) {
           sqMate = sq;
           break;
         }
@@ -16879,7 +17034,7 @@ class Board {
           clearInterval(timer);
           style.left = `${xMate}px`;
           style.zIndex = "0";
-          this.imgSquares[sqMate].src = `${this.images + (this.pos.sdPlayer === 0 ? "r" : "b")}km.gif`;
+          this.imgSquares[sqMate].src = `${this.images + (this.engine.sdPlayer === 0 ? "r" : "b")}km.gif`;
           this.postMate(computerMove);
         } else {
           style.left = `${xMate + ((step & 1) === 0 ? step : -step) * 2}px`;
@@ -16888,10 +17043,11 @@ class Board {
       }, 50);
       return;
     }
-    let vlRep = this.pos.repStatus(3);
+    let vlRep = this.engine.repStatus(3);
     if (vlRep > 0) {
-      vlRep = this.pos.repValue(vlRep);
-      if (vlRep > -WIN_VALUE && vlRep < WIN_VALUE) {
+      const WIN_VALUE_THRESHOLD = 9e3;
+      vlRep = this.engine.repValue(vlRep);
+      if (vlRep > -WIN_VALUE_THRESHOLD && vlRep < WIN_VALUE_THRESHOLD) {
         this.playSound("draw");
         this.result = RESULT_DRAW;
         alertDelay("双方不变作和，辛苦了！");
@@ -16908,10 +17064,10 @@ class Board {
       this.busy = false;
       return;
     }
-    if (this.pos.captured()) {
+    if (this.engine.captured()) {
       let hasMaterial = false;
       for (let sq = 0; sq < 256; sq++) {
-        if (IN_BOARD(sq) && (this.pos.squares[sq] & 7) > 2) {
+        if (IN_BOARD(sq) && (this.engine.getPiece(sq) & 7) > 2) {
           hasMaterial = true;
           break;
         }
@@ -16924,15 +17080,8 @@ class Board {
         this.busy = false;
         return;
       }
-    } else if (this.pos.pcList.length > 100) {
-      let captured = false;
-      for (let i = 2; i <= 100; i++) {
-        if (this.pos.pcList[this.pos.pcList.length - i] > 0) {
-          captured = true;
-          break;
-        }
-      }
-      if (!captured) {
+    } else if (this.engine.getHistoryLength() > 100) {
+      {
         this.playSound("draw");
         this.result = RESULT_DRAW;
         alertDelay("超过自然限着作和，辛苦了！");
@@ -16941,9 +17090,9 @@ class Board {
         return;
       }
     }
-    if (this.pos.inCheck()) {
+    if (this.engine.inCheck()) {
       this.playSound(computerMove ? "check2" : "check");
-    } else if (this.pos.captured()) {
+    } else if (this.engine.captured()) {
       this.playSound(computerMove ? "capture2" : "capture");
     } else {
       this.playSound(computerMove ? "move2" : "move");
@@ -16962,7 +17111,7 @@ class Board {
     this.busy = false;
   }
   response() {
-    if (this.search == null || !this.computerMove()) {
+    if (!this.computerMove()) {
       this.busy = false;
       return;
     }
@@ -16970,7 +17119,15 @@ class Board {
     thinking.style.visibility = "visible";
     this.busy = true;
     setTimeout(() => {
-      this.addMove(this.search.searchMain(LIMIT_DEPTH, this.millis), true);
+      const ucciMove = this.engine.findBestMove(64, this.millis);
+      if (ucciMove === "nomove") {
+        console.log("Engine found no move.");
+        thinking.style.visibility = "hidden";
+        this.busy = false;
+        return;
+      }
+      const internalMove = this.engine.ucciMoveToInternal(ucciMove);
+      this.addMove(internalMove, true);
       thinking.style.visibility = "hidden";
     }, 250);
   }
@@ -16979,8 +17136,8 @@ class Board {
       return;
     }
     const sq = this.flipped(sq_);
-    const pc = this.pos.squares[sq];
-    if ((pc & SIDE_TAG(this.pos.sdPlayer)) !== 0) {
+    const pc = this.engine.getPiece(sq);
+    if ((pc & SIDE_TAG(this.engine.sdPlayer)) !== 0) {
       this.playSound("click");
       if (this.mvLast !== 0) {
         this.drawSquare(SRC(this.mvLast), false);
@@ -16997,11 +17154,11 @@ class Board {
   }
   drawSquare(sq, selected) {
     const img = this.imgSquares[this.flipped(sq)];
-    img.src = `${this.images + PIECE_NAME[this.pos.squares[sq]]}.gif`;
+    img.src = `${this.images + PIECE_NAME[this.engine.getPiece(sq)]}.gif`;
     img.style.backgroundImage = selected ? `url(${this.images}oos.gif)` : "";
   }
   flushBoard() {
-    this.mvLast = this.pos.mvList[this.pos.mvList.length - 1];
+    this.mvLast = this.engine.lastMove();
     for (let sq = 0; sq < 256; sq++) {
       if (IN_BOARD(sq)) {
         this.drawSquare(sq, sq === SRC(this.mvLast) || sq === DST(this.mvLast));
@@ -17013,7 +17170,7 @@ class Board {
       return;
     }
     this.result = RESULT_UNKNOWN$1;
-    this.pos.fromFen(fen);
+    this.engine.loadFen(fen);
     this.flushBoard();
     this.playSound("newgame");
     this.response();
@@ -17023,11 +17180,11 @@ class Board {
       return;
     }
     this.result = RESULT_UNKNOWN$1;
-    if (this.pos.mvList.length > 1) {
-      this.pos.undoMakeMove();
+    if (this.engine.getHistoryLength() > 1) {
+      this.engine.undoInternalMove();
     }
-    if (this.pos.mvList.length > 1 && this.computerMove()) {
-      this.pos.undoMakeMove();
+    if (this.engine.getHistoryLength() > 1 && this.computerMove()) {
+      this.engine.undoInternalMove();
     }
     this.flushBoard();
     this.response();
@@ -17047,7 +17204,6 @@ const selMoveList = () => document.getElementById("selMoveList");
 const STARTUP_FEN = [
   "rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C5C1/9/RNBAKABNR w",
   "rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C5C1/9/RNBAKAB1R w",
-  "rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C5C1/9/R1BAKAB1R w",
   "rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/9/1C5C1/9/RN2K2NR w"
 ];
 function move2Iccs(mv) {
@@ -17074,11 +17230,11 @@ function restart_click() {
 }
 function retract_click() {
   const moveList = selMoveList();
-  for (let i = board$1().pos.mvList.length; i < moveList.children.length; i++) {
-    board$1().pos.makeMove(Number.parseInt(moveList.children[i].dataset.value));
+  for (let i = board$1().engine.getHistoryLength(); i < moveList.children.length; i++) {
+    board$1().engine.makeInternalMove(Number.parseInt(moveList.children[i].dataset.value));
   }
   board$1().retract();
-  while (moveList.children.length > board$1().pos.mvList.length) {
+  while (moveList.children.length > board$1().engine.getHistoryLength()) {
     moveList.removeChild(moveList.lastChild);
   }
   if (moveList.children.length > 0) {
@@ -17105,18 +17261,18 @@ function App() {
 }
 const handleMoveClick = (e) => {
   if (board.result !== RESULT_UNKNOWN) {
-    const from = board.pos.mvList.length;
+    const from = board.engine.getHistoryLength();
     const to = parseInt(e.currentTarget.dataset.index, 10);
     if (from === to + 1) {
       return;
     }
     if (from > to + 1) {
       for (let i = to + 1; i < from; i++) {
-        board.pos.undoMakeMove();
+        board.engine.undoInternalMove();
       }
     } else {
       for (let i = from; i <= to; i++) {
-        board.pos.makeMove(Number(selMoveList().children[i].dataset.value));
+        board.engine.makeInternalMove(Number(selMoveList().children[i].dataset.value));
       }
     }
     board.flushBoard();
@@ -17126,14 +17282,13 @@ render(App(), document.body);
 const container = document.getElementById("container");
 const board = new Board(container, "images/", "sounds/");
 window.board = board;
-board.setSearch(16);
 board.millis = 10;
 board.computer = 1;
 board.onAddMove = () => {
   const moveList = selMoveList();
-  const counter = board.pos.mvList.length >> 1;
+  const counter = board.engine.getHistoryLength() >> 1;
   const space = counter > 99 ? "    " : "   ";
-  const text = (board.pos.sdPlayer === 0 ? space : `${(counter > 9 ? "" : " ") + counter}.`) + move2Iccs(board.mvLast);
+  const text = (board.engine.sdPlayer === 0 ? space : `${(counter > 9 ? "" : " ") + counter}.`) + move2Iccs(board.mvLast);
   const value = `${board.mvLast}`;
   const moveItem = document.createElement("li");
   moveItem.className = "move-item";
@@ -17148,4 +17303,4 @@ board.onAddMove = () => {
   moveList.appendChild(moveItem);
   moveList.scrollTop = moveList.scrollHeight;
 };
-//# sourceMappingURL=index-Bf87HmbC.js.map
+//# sourceMappingURL=index-lSQSey94.js.map

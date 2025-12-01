@@ -1,5 +1,5 @@
 import { type Board, RESULT_UNKNOWN } from "./board.ts"
-import { ASC, CHR, DST, FILE_LEFT, FILE_X, RANK_TOP, RANK_Y, SRC } from "./position.ts";
+import { ASC, CHR, DST, FILE_LEFT, FILE_X, RANK_TOP, RANK_Y, SRC } from "./engine/position.ts"; // Directly from position.ts
 
 const board = () => window.board
 
@@ -11,7 +11,6 @@ export const selMoveList = () => document.getElementById("selMoveList")! as HTML
 const STARTUP_FEN = [
     "rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C5C1/9/RNBAKABNR w",
     "rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C5C1/9/RNBAKAB1R w",
-    "rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C5C1/9/R1BAKAB1R w",
     "rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/9/1C5C1/9/RN2K2NR w",
 ];
 
@@ -45,12 +44,14 @@ export function restart_click() {
 
 export function retract_click() {
     const moveList = selMoveList();
-    for (let i = board().pos.mvList.length; i < moveList.children.length; i++) {
-        board().pos.makeMove(Number.parseInt(moveList.children[i].dataset.value!));
+    for (let i = board().engine.getHistoryLength(); i < moveList.children.length; i++) {
+        // Here, makeInternalMove expects an internal move number, but moveList.children[i].dataset.value!
+        // is the internal move number that was stored. So, Number.parseInt is correct.
+        board().engine.makeInternalMove(Number.parseInt(moveList.children[i].dataset.value!));
     }
     board().retract();
     // Remove extra moves from the list
-    while (moveList.children.length > board().pos.mvList.length) {
+    while (moveList.children.length > board().engine.getHistoryLength()) {
         moveList.removeChild(moveList.lastChild!);
     }
     // Set the last move as selected

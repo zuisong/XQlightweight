@@ -216,7 +216,7 @@ export class ExcaliburBoard {
 
       // --- Modal for Settings ---
       const modalWidth = isMobile ? TOTAL_WIDTH_VERTICAL * 0.9 : 400;
-      const modalHeight = 450;
+      const modalHeight = 500; // Increased height to accommodate new button
       const settingsModal = new Modal(modalWidth, modalHeight, Color.fromHex(this.colors.uiBackground));
       this.game.add(settingsModal);
       settingsModal.hide(); // Explicitly hide after adding to game
@@ -302,6 +302,13 @@ export class ExcaliburBoard {
           settingsModal.hide();
       }, { ...buttonStyle, backgroundColor: Color.fromHex('#EF4444'), textColor: Color.White, hoverColor: Color.fromHex('#DC2626') }, itemWidth, 40);
       settingsModal.contentArea.addChild(btnRestartInModal);
+      currentY += itemGap; // Add itemGap after restart button
+
+      // 8. Close Button
+      const btnCloseModal = new Button(vec(startX, currentY), "关闭", () => {
+          settingsModal.hide();
+      }, { ...buttonStyle, backgroundColor: Color.fromHex(this.colors.button), textColor: Color.fromHex(this.colors.buttonText), hoverColor: Color.fromHex(this.colors.buttonHover) }, itemWidth, 40);
+      settingsModal.contentArea.addChild(btnCloseModal);
       
       let sbX = 0;
       let sbY = 0;

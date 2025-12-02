@@ -28,7 +28,7 @@ body {
   justify-content: center;
   align-items: center;
   min-height: 100vh;
-  padding: calc(var(--spacing-unit) * 2);
+  padding: calc(var(--spacing-unit) * 2 + env(safe-area-inset-top, 0px)) calc(var(--spacing-unit) * 2 + env(safe-area-inset-right, 0px)) calc(var(--spacing-unit) * 2 + env(safe-area-inset-bottom, 0px)) calc(var(--spacing-unit) * 2 + env(safe-area-inset-left, 0px));
 }
 
 .app-container {

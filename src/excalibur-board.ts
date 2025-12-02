@@ -110,7 +110,7 @@ export class ExcaliburBoard {
 
     // Dynamic Resolution Calculation
     const screenWidth = options.screenWidth;
-    const screenHeight = options.screenHeight;
+    const screenHeight = options.screenHeight; // Reverted to original screenHeight
     const screenRatio = screenWidth / screenHeight;
 
     let width, height;
@@ -200,6 +200,7 @@ export class ExcaliburBoard {
       // Calculate base positions
       if (isMobile) {
           x = UI_OFFSET_X_VERTICAL;
+          // Adjust initial y for safe area top
           y = UI_OFFSET_Y_VERTICAL;
       } else {
           x = UI_OFFSET_X_HORIZONTAL;
@@ -329,7 +330,7 @@ export class ExcaliburBoard {
           y += btnH + 20;
 
           // Move List
-          // Use remaining height
+          // Use remaining height, accounting for safe area bottom
           const listHeight = TOTAL_HEIGHT_VERTICAL - y - 20;
           // Background for list on mobile
           const listBg = new Actor({

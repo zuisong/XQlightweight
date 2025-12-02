@@ -56,6 +56,8 @@ export interface ExcaliburBoardOptions {
     screenHeight: number;
     isDarkMode: boolean;
     setBackgroundColor: (color: string) => void;
+    onSaveGame: (fen: string) => void;
+    onLoadGame: () => string | null;
 }
 
 export class ExcaliburBoard {
@@ -94,8 +96,12 @@ export class ExcaliburBoard {
 
   // Theme
   colors: typeof COLORS.light;
+  private _onSaveGame: (fen: string) => void;
+  private _onLoadGame: () => string | null;
 
   constructor(options: ExcaliburBoardOptions) {
+    this._onSaveGame = options.onSaveGame;
+    this._onLoadGame = options.onLoadGame;
     this.engine = new XiangQiEngine();
     
     // Detect Layout & Theme
@@ -180,6 +186,11 @@ export class ExcaliburBoard {
     const customLoader = new CustomLoader();
     this.game.start(customLoader).then(() => {
        this.restart(); // Initial start
+       const savedFen = this._onLoadGame(); // Attempt to load game after initial restart
+       if (savedFen) {
+          this.engine.loadFen(savedFen);
+          this.flushBoard();
+       }
     });
   }
 
@@ -207,6 +218,7 @@ export class ExcaliburBoard {
       const modalHeight = 450;
       const settingsModal = new Modal(modalWidth, modalHeight, Color.fromHex(this.colors.uiBackground));
       this.game.add(settingsModal);
+      settingsModal.hide(); // Explicitly hide after adding to game
 
       // Populate Modal Content
       // We need to add actors to the modal's contentArea or just manage them manually when modal shows
@@ -298,15 +310,22 @@ export class ExcaliburBoard {
 
       if (isMobile) {
           // Mobile Layout:
-          // Row 1: Settings | Retract
-          const btnW = (TOTAL_WIDTH_VERTICAL - 60) / 2;
+          // Row 1: Settings | Retract | Recommend
+          const btnW = (TOTAL_WIDTH_VERTICAL - 80) / 3; // Adjusted for 3 buttons and more padding
           const btnH = 50;
+          let currentButtonX = 20;
 
-          const btnSettings = new Button(vec(20, y), "设置", () => settingsModal.show(), buttonStyle, btnW, btnH);
+          const btnSettings = new Button(vec(currentButtonX, y), "设置", () => settingsModal.show(), buttonStyle, btnW, btnH);
           this.game.add(btnSettings);
+          currentButtonX += btnW + 20;
           
-          const btnRetract = new Button(vec(20 + btnW + 20, y), "悔棋", () => this.retract(), buttonStyle, btnW, btnH);
+          const btnRetract = new Button(vec(currentButtonX, y), "悔棋", () => this.retract(), buttonStyle, btnW, btnH);
           this.game.add(btnRetract);
+          currentButtonX += btnW + 20;
+
+          const btnRecommendMove = new Button(vec(currentButtonX, y), "提示", () => this.recommendMove(), buttonStyle, btnW, btnH);
+          this.game.add(btnRecommendMove);
+          
           y += btnH + 20;
 
           // Move List
@@ -346,6 +365,10 @@ export class ExcaliburBoard {
 
           const btnRetract = new Button(vec(x, y), "悔棋", () => this.retract(), buttonStyle);
           this.game.add(btnRetract);
+          y += UI_LINE_HEIGHT * 1.5;
+
+          const btnRecommendMove = new Button(vec(x, y), "提示", () => this.recommendMove(), buttonStyle);
+          this.game.add(btnRecommendMove);
           y += UI_LINE_HEIGHT * 1.5;
 
           // Score Bar Position for Desktop
@@ -716,6 +739,7 @@ export class ExcaliburBoard {
 
     this.postAddMove2();
     this.response();
+    this._onSaveGame(this.engine.getFen()); // Auto-save after every move
   }
 
   postAddMove2() {
@@ -900,5 +924,26 @@ export class ExcaliburBoard {
   
   setSound(enabled: boolean) {
       this.sound = enabled;
+  }
+
+  async recommendMove() {
+      if (this.busy || this.result !== RESULT_UNKNOWN) {
+          return;
+      }
+      this.thinkingActor.showThinking();
+      this.busy = true;
+
+      // Give a small delay to show thinking indicator
+      setTimeout(async () => {
+          const ucciMove = this.engine.findBestMove(64, this.millis); // Use current level's millis
+          this.thinkingActor.hideThinking();
+          if (ucciMove === "nomove") {
+              this.busy = false;
+              return;
+          }
+          const internalMove = this.engine.ucciMoveToInternal(ucciMove);
+          await this.addMove(internalMove, false); // Treat as user move for auto-save, not computerMove
+          this.busy = false; // Release busy state after move is made
+      }, 250);
   }
 }

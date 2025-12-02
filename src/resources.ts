@@ -1,18 +1,18 @@
 // src/resources.ts
-import { ImageSource, Loader, Sound } from 'excalibur';
+import { ImageSource, Loader, Sound, Gif } from 'excalibur';
 import { PIECE_IMAGE_MAP } from './constants';
 
 // Board Image
 const boardImg = new ImageSource('images/board.jpg');
-const oosImg = new ImageSource('images/oos.gif'); // Selection overlay
+const oosImg = new Gif('images/oos.gif'); // Selection overlay
 
 // Piece Images
 const pieceImages: { [key: string]: ImageSource } = {};
 for (const key in PIECE_IMAGE_MAP) {
   const pieceName = PIECE_IMAGE_MAP[key];
-  pieceImages[pieceName] = new ImageSource(`images/${pieceName}.gif`);
+  pieceImages[pieceName] = new Gif(`images/${pieceName}.gif`);
 }
-const thinkingImg = new ImageSource('images/thinking.gif');
+const thinkingImg = new Gif('images/thinking.gif');
 
 
 // Sounds

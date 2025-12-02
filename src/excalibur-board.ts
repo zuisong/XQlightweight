@@ -1,9 +1,9 @@
 // src/excalibur-board.ts
-import { Engine, DisplayMode, Color, Vector, Actor, vec } from "excalibur";
+import { Engine, DisplayMode, Color, Vector, Actor, Timer, vec, Scene, Label, Font, TextAlign, Rectangle, BaseAlign } from "excalibur";
 import { Resources } from "./resources";
 import { PieceActor, SelectionActor, ThinkingActor } from "./actors";
 import { XiangQiEngine } from "./engine/index";
-import { Button, Checkbox, TextButton, type ButtonStyle } from "./ui-actors";
+import { Button, Checkbox, TextButton, Modal, type ButtonStyle } from "./ui-actors";
 import { CustomLoader } from './custom-loader';
 import {
   IN_BOARD,
@@ -78,8 +78,14 @@ export class ExcaliburBoard {
   computer = 1; // Default: Computer goes second (1), User goes first (0)
   result = RESULT_UNKNOWN;
   busy = false;
-  animated = false; // Default to false for no initial animation
+  animated = true; // Default to true for initial animation
   sound = true;
+  showScore = true;
+  // scoreLabel: Label | undefined; // Replaced by bars
+  scoreBarRed: Actor | undefined;
+  scoreBarBlack: Actor | undefined;
+  scoreBarBg: Actor | undefined;
+  scoreBarLabel: Label | undefined;
   
   // Settings State
   handicapIndex = 0;
@@ -180,6 +186,7 @@ export class ExcaliburBoard {
   setupUI(isMobile: boolean) {
       let x: number, y: number;
       
+      // Calculate base positions
       if (isMobile) {
           x = UI_OFFSET_X_VERTICAL;
           y = UI_OFFSET_Y_VERTICAL;
@@ -195,107 +202,161 @@ export class ExcaliburBoard {
       };
       const selectedColor = Color.fromHex(this.colors.selected);
 
+      // --- Modal for Settings ---
+      const modalWidth = isMobile ? TOTAL_WIDTH_VERTICAL * 0.9 : 400;
+      const modalHeight = 450;
+      const settingsModal = new Modal(modalWidth, modalHeight, Color.fromHex(this.colors.uiBackground));
+      this.game.add(settingsModal);
+
+      // Populate Modal Content
+      // We need to add actors to the modal's contentArea or just manage them manually when modal shows
+      // Since Modal is a ScreenElement, its children move with it.
+      
+      let my = 20; // Modal Y relative to contentArea top-left (which is centered)
+      // Actually Modal contentArea anchor is (0.5, 0.5). So (0,0) is center.
+      // Let's make coordinates relative to top-left of modal content area.
+      // TopLeft is (-width/2, -height/2).
+      const startX = -modalWidth / 2 + 20;
+      const startY = -modalHeight / 2 + 20;
+      const itemGap = 50;
+      const itemWidth = modalWidth - 40;
+
+      // Settings Title
+      const titleLabel = new Label({
+          text: "游戏设置",
+          pos: vec(0, startY),
+          font: new Font({
+              size: 24,
+              color: Color.fromHex(this.colors.text),
+              textAlign: TextAlign.Center,
+              baseAlign: BaseAlign.Top
+          })
+      });
+      settingsModal.contentArea.addChild(titleLabel);
+      
+      let currentY = startY + 50;
+
+      // 1. Move Mode
+      const btnMoveMode = new Button(vec(startX, currentY), this.getMoveModeText(), () => {
+          this.moveModeIndex = (this.moveModeIndex + 1) % 3;
+          btnMoveMode.setText(this.getMoveModeText());
+      }, buttonStyle, itemWidth, 40);
+      settingsModal.contentArea.addChild(btnMoveMode);
+      currentY += itemGap;
+
+      // 2. Handicap
+      const btnHandicap = new Button(vec(startX, currentY), this.getHandicapText(), () => {
+          this.handicapIndex = (this.handicapIndex + 1) % 4;
+          btnHandicap.setText(this.getHandicapText());
+      }, buttonStyle, itemWidth, 40);
+      settingsModal.contentArea.addChild(btnHandicap);
+      currentY += itemGap;
+
+      // 3. Level
+      const btnLevel = new Button(vec(startX, currentY), this.getLevelText(), () => {
+          this.levelIndex = (this.levelIndex + 1) % 3;
+          btnLevel.setText(this.getLevelText());
+          this.millis = 10 ** (this.levelIndex + 1);
+      }, buttonStyle, itemWidth, 40);
+      settingsModal.contentArea.addChild(btnLevel);
+      currentY += itemGap;
+
+      // 4. Animation
+      const chkAnim = new Checkbox(vec(startX, currentY), "动画效果", this.animated, (checked) => {
+          this.animated = checked;
+      }, buttonStyle, itemWidth, 40);
+      settingsModal.contentArea.addChild(chkAnim);
+      currentY += itemGap;
+
+      // 5. Sound
+      const chkSound = new Checkbox(vec(startX, currentY), "游戏音效", this.sound, (checked) => {
+          this.sound = checked;
+      }, buttonStyle, itemWidth, 40);
+      settingsModal.contentArea.addChild(chkSound);
+      currentY += itemGap;
+
+      // 6. Show Score
+      const chkScore = new Checkbox(vec(startX, currentY), "显示评分", this.showScore, (checked) => {
+          this.showScore = checked;
+          this.updateScore();
+      }, buttonStyle, itemWidth, 40);
+      settingsModal.contentArea.addChild(chkScore);
+      currentY += itemGap;
+
+      // 7. Restart (Inside Settings)
+      const btnRestartInModal = new Button(vec(startX, currentY), "重新开始", () => {
+          this.restart();
+          settingsModal.hide();
+      }, { ...buttonStyle, backgroundColor: Color.fromHex('#EF4444'), textColor: Color.White, hoverColor: Color.fromHex('#DC2626') }, itemWidth, 40);
+      settingsModal.contentArea.addChild(btnRestartInModal);
+      
+      let sbX = 0;
+      let sbY = 0;
+      let sbW = 0;
+
+      // --- Main Screen UI ---
+
       if (isMobile) {
-          // Mobile Layout: Centered, Larger Buttons
-          const padding = 20;
-          const gap = 20;
-          const contentWidth = TOTAL_WIDTH_VERTICAL - padding * 2;
-          const btnW = (contentWidth - gap) / 2;
-          const btnH = 50; // Larger height for touch
+          // Mobile Layout:
+          // Row 1: Settings | Retract
+          const btnW = (TOTAL_WIDTH_VERTICAL - 60) / 2;
+          const btnH = 50;
 
-          const col1X = padding;
-          const col2X = padding + btnW + gap;
-
-          // Row 1: Restart | Retract
-          const btnRestart = new Button(vec(col1X, y), "重新开始", () => this.restart(), buttonStyle, btnW, btnH);
-          this.game.add(btnRestart);
+          const btnSettings = new Button(vec(20, y), "设置", () => settingsModal.show(), buttonStyle, btnW, btnH);
+          this.game.add(btnSettings);
           
-          const btnRetract = new Button(vec(col2X, y), "悔棋", () => this.retract(), buttonStyle, btnW, btnH);
+          const btnRetract = new Button(vec(20 + btnW + 20, y), "悔棋", () => this.retract(), buttonStyle, btnW, btnH);
           this.game.add(btnRetract);
-          y += btnH + gap;
-          
-          // Row 2: MoveMode | Level
-          const btnMoveMode = new Button(vec(col1X, y), this.getMoveModeText(), () => {
-              this.moveModeIndex = (this.moveModeIndex + 1) % 3;
-              btnMoveMode.setText(this.getMoveModeText());
-          }, buttonStyle, btnW, btnH);
-          this.game.add(btnMoveMode);
-          
-          const btnLevel = new Button(vec(col2X, y), this.getLevelText(), () => {
-              this.levelIndex = (this.levelIndex + 1) % 3;
-              btnLevel.setText(this.getLevelText());
-              this.millis = 10 ** (this.levelIndex + 1);
-          }, buttonStyle, btnW, btnH);
-          this.game.add(btnLevel);
-          y += btnH + gap;
+          y += btnH + 20;
 
-          // Row 3: Handicap | Checkboxes (Stacked)
-          const btnHandicap = new Button(vec(col1X, y), this.getHandicapText(), () => {
-              this.handicapIndex = (this.handicapIndex + 1) % 4;
-              btnHandicap.setText(this.getHandicapText());
-          }, buttonStyle, btnW, btnH);
-          this.game.add(btnHandicap);
-          
-          // Stack Checkboxes in Col 2 space
-          const chkH = btnH / 2;
-          const chkAnim = new Checkbox(vec(col2X, y), "动画", this.animated, (checked) => this.animated = checked, buttonStyle, btnW, chkH);
-          this.game.add(chkAnim);
-          
-          const chkSound = new Checkbox(vec(col2X, y + chkH), "音效", this.sound, (checked) => this.sound = checked, buttonStyle, btnW, chkH);
-          this.game.add(chkSound);
-          y += btnH + gap;
-          
           // Move List
-          const listBtnH = 30; // Larger list items too
-          for (let i = 0; i < 4; i++) { 
-              const btn = new TextButton(vec(col1X, y + i * listBtnH), "", () => this.handleMoveListClick(i), buttonStyle, selectedColor, contentWidth, listBtnH);
+          // Use remaining height
+          const listHeight = TOTAL_HEIGHT_VERTICAL - y - 20;
+          // Background for list on mobile
+          const listBg = new Actor({
+              pos: vec(20, y),
+              width: TOTAL_WIDTH_VERTICAL - 40,
+              height: listHeight,
+              anchor: Vector.Zero,
+              color: Color.fromHex(this.colors.uiBackground),
+              z: 90
+          });
+          this.game.add(listBg);
+
+          const listBtnH = 30;
+          const count = Math.floor(listHeight / listBtnH);
+          for (let i = 0; i < count; i++) { 
+              const btn = new TextButton(vec(20, y + i * listBtnH), "", () => this.handleMoveListClick(i), buttonStyle, selectedColor, TOTAL_WIDTH_VERTICAL - 40, listBtnH);
               this.moveListActors.push(btn);
               this.game.add(btn);
           }
-          
+
+          // Score Bar Position for Mobile
+          sbX = TOTAL_WIDTH_VERTICAL / 2;
+          sbY = BOARD_HEIGHT + 5;
+          sbW = TOTAL_WIDTH_VERTICAL * 0.8;
+
       } else {
           // Desktop Layout
           // Restart Button
-          const btnRestart = new Button(vec(x, y), "重新开始", () => this.restart(), buttonStyle);
-          this.game.add(btnRestart);
-          y += UI_LINE_HEIGHT;
+          // Or vertical stack
+          const btnSettings = new Button(vec(x, y), "设置", () => settingsModal.show(), buttonStyle);
+          this.game.add(btnSettings);
+          y += UI_LINE_HEIGHT * 1.5;
 
           const btnRetract = new Button(vec(x, y), "悔棋", () => this.retract(), buttonStyle);
           this.game.add(btnRetract);
           y += UI_LINE_HEIGHT * 1.5;
 
-          const btnMoveMode = new Button(vec(x, y), this.getMoveModeText(), () => {
-              this.moveModeIndex = (this.moveModeIndex + 1) % 3;
-              btnMoveMode.setText(this.getMoveModeText());
-          }, buttonStyle);
-          this.game.add(btnMoveMode);
-          y += UI_LINE_HEIGHT;
-
-          const btnHandicap = new Button(vec(x, y), this.getHandicapText(), () => {
-              this.handicapIndex = (this.handicapIndex + 1) % 4;
-              btnHandicap.setText(this.getHandicapText());
-          }, buttonStyle);
-          this.game.add(btnHandicap);
-          y += UI_LINE_HEIGHT;
-
-          const btnLevel = new Button(vec(x, y), this.getLevelText(), () => {
-              this.levelIndex = (this.levelIndex + 1) % 3;
-              btnLevel.setText(this.getLevelText());
-              this.millis = 10 ** (this.levelIndex + 1);
-          }, buttonStyle);
-          this.game.add(btnLevel);
-          y += UI_LINE_HEIGHT * 1.5;
-
-          const chkAnim = new Checkbox(vec(x, y), "动画", this.animated, (checked) => this.animated = checked, buttonStyle);
-          this.game.add(chkAnim);
-          y += 30;
-
-          const chkSound = new Checkbox(vec(x, y), "音效", this.sound, (checked) => this.sound = checked, buttonStyle);
-          this.game.add(chkSound);
-          y += UI_LINE_HEIGHT;
-
-          y += 10;
+          // Score Bar Position for Desktop
+          // x is the left edge of the column (541). UI content width is ~200.
+          sbX = x + 100; 
+          sbY = y + 5;
+          sbW = 180;
           
+          y += 25; // Space for bars
+
+          // Move List
           // List Container Background
           this.moveListContainer = new Actor({
               pos: vec(x, y),
@@ -313,6 +374,58 @@ export class ExcaliburBoard {
               this.game.add(btn);
           }
       }
+
+      // Score Bars (Shared Creation)
+      const barWidth = sbW;
+      const barHeight = 10;
+      const barY = sbY;
+      const barX = sbX;
+
+      // Background Bar
+      this.scoreBarBg = new Actor({
+          pos: vec(barX, barY),
+          anchor: vec(0.5, 0.5),
+          width: barWidth,
+          height: barHeight,
+          z: 99
+      });
+      this.scoreBarBg.graphics.use(new Rectangle({ width: barWidth, height: barHeight, color: Color.Gray }));
+      this.game.add(this.scoreBarBg);
+
+      // Red Bar (Left side, Red color)
+      this.scoreBarRed = new Actor({
+          pos: vec(barX - barWidth/2, barY),
+          anchor: vec(0, 0.5), // Left anchor
+          z: 100
+      });
+      // Initial graphic will be updated by updateScore
+      this.game.add(this.scoreBarRed);
+
+      // Black Bar (Right side, Black color)
+      this.scoreBarBlack = new Actor({
+          pos: vec(barX + barWidth/2, barY),
+          anchor: vec(1, 0.5), // Right anchor
+          z: 100
+      });
+      // Initial graphic will be updated by updateScore
+      this.game.add(this.scoreBarBlack);
+
+      // Score Label (Percentage)
+      this.scoreBarLabel = new Label({
+          text: "50%",
+          pos: vec(barX, barY),
+          font: new Font({
+              size: 10,
+              color: Color.White,
+              textAlign: TextAlign.Center,
+              baseAlign: BaseAlign.Middle,
+              bold: true
+          }),
+          z: 101 // Above bars
+      });
+      this.game.add(this.scoreBarLabel);
+      
+      this.updateScore(); // Initial update
   }
 
   getMoveModeText() {
@@ -503,7 +616,7 @@ export class ExcaliburBoard {
     if (this.busy || this.result !== RESULT_UNKNOWN) {
       return;
     }
-    const sq = this.flipped(sq_);
+    const sq = sq_;
     const pc = this.engine.getPiece(sq);
     const selfSide = SIDE_TAG(this.engine.sdPlayer);
 
@@ -630,6 +743,72 @@ export class ExcaliburBoard {
       }, 250);
   }
 
+  updateScore() {
+      if (!this.scoreBarRed || !this.scoreBarBlack || !this.scoreBarBg) return;
+      
+      if (this.showScore) {
+          const scores = this.engine.getScores();
+          const total = scores.red + scores.black;
+          
+          // Avoid division by zero
+          const redRatio = total === 0 ? 0.5 : scores.red / total;
+          const blackRatio = total === 0 ? 0.5 : scores.black / total;
+          
+          // Update widths
+          // BarBG width is fixed (80% of board/screen).
+          // We need to set Red width to ratio * bgWidth.
+          // And Black width to ratio * bgWidth.
+          // Wait, Excalibur Actor width is for collider/drawing.
+          // If we use a Rectangle graphic, we might need to recreate it or scale it.
+          // Let's try scaling the Actor horizontally? 
+          // Or changing the width property if using a Rectangle graphic.
+          // Actually, `this.scoreBarRed` uses default graphic if not set?
+          // In setupUI, I initialized them with `width` property but no explicit graphic.
+          // Excalibur creates a default collider box, but NO graphic by default unless `color` is set?
+          // If `color` is set in constructor, Excalibur <= 0.25 creates a Rect. 
+          // In 0.28+, we need to explicitly use Graphics.
+          // Let's check constructor again. `new Actor({ color: ... })` does NOT create a graphic automatically in newer versions?
+          // Wait, Excalibur documentation says `color` property on Actor config sets the default graphic color IF it's a simple actor?
+          // No, usually we need `graphics.use(...)`.
+          // Let's fix initialization first to use Rectangles.
+      
+          const fullWidth = this.scoreBarBg.width;
+          
+          // Recreate graphics for dynamic width
+          const redWidth = fullWidth * redRatio;
+          const blackWidth = fullWidth * blackRatio;
+          
+          this.scoreBarRed.graphics.use(new Rectangle({
+              width: redWidth,
+              height: 10,
+              color: Color.fromHex('#ef4444')
+          }));
+          // Since anchor is (0, 0.5), changing width of graphic is enough if pos is correct.
+          
+          this.scoreBarBlack.graphics.use(new Rectangle({
+              width: blackWidth,
+              height: 10,
+              color: Color.Black
+          }));
+
+          this.scoreBarBg.graphics.visible = true;
+          this.scoreBarRed.graphics.visible = true;
+          this.scoreBarBlack.graphics.visible = true;
+
+          if (this.scoreBarLabel) {
+              this.scoreBarLabel.text = `红方胜率: ${(redRatio * 100).toFixed(0)}%`;
+              this.scoreBarLabel.graphics.visible = true;
+          }
+      } else {
+          this.scoreBarBg.graphics.visible = false;
+          this.scoreBarRed.graphics.visible = false;
+          this.scoreBarBlack.graphics.visible = false;
+          if (this.scoreBarLabel) {
+              this.scoreBarLabel.graphics.visible = false;
+          }
+      }
+  }
+
   flushBoard() {
       for (let i = 0; i < 256; i++) {
           if (IN_BOARD(i)) {
@@ -654,6 +833,7 @@ export class ExcaliburBoard {
       }
       this.updateSelection();
       this.updateMoveList();
+      this.updateScore();
   }
 
   updateSelection() {

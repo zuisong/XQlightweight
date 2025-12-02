@@ -199,5 +199,16 @@ export class XiangQiEngine {
             inCheck: this._position.inCheck()
         };
     }
+
+    getRedScore(): number {
+        return this._position.vlWhite - this._position.vlBlack;
+    }
+
+    getScores(): { red: number; black: number } {
+        return {
+            red: this._position.vlWhite,
+            black: this._position.vlBlack
+        };
+    }
 }
 

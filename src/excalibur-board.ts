@@ -891,6 +891,7 @@ export class ExcaliburBoard {
 
   restart(fen?: string) {
       if (this.busy) return;
+      this._onSaveGame(this.engine.getFen()); // Save current game state before restarting
       this.result = RESULT_UNKNOWN;
       const fenToLoad = fen || STARTUP_FEN[this.handicapIndex];
       this.engine.loadFen(fenToLoad);

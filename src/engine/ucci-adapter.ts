@@ -1,4 +1,5 @@
 // src/engine/ucci-adapter.ts
+import * as readline from 'node:readline';
 import { XiangQiEngine } from "./index.ts";
 
 export class UcciAdapter {
@@ -20,35 +21,23 @@ export class UcciAdapter {
         this.sendLine("id author " + this.engine.getId().author);
         this.sendLine("ucciok");
 
-        for await (const line of this.readLines()) {
+        const rl = readline.createInterface({
+            input: process.stdin,
+            output: process.stdout,
+            terminal: false
+        });
+
+        for await (const line of rl) {
             if (!this.running) {
+                rl.close();
                 break;
             }
-            this.handleCommand(line);
+            this.handleCommand(line.trim());
         }
     }
 
     private sendLine(message: string): void {
         console.log(message);
-    }
-
-    private async *readLines(): AsyncIterableIterator<string> {
-        const decoder = new TextDecoder();
-        const buffer = new Uint8Array(1024);
-        let n: number | null;
-        let lineBuffer = "";
-
-        while ((n = await Deno.stdin.read(buffer)) !== null) {
-            lineBuffer += decoder.decode(buffer.subarray(0, n));
-            let newlineIndex;
-            while ((newlineIndex = lineBuffer.indexOf('\n')) !== -1) {
-                const line = lineBuffer.substring(0, newlineIndex).trim();
-                lineBuffer = lineBuffer.substring(newlineIndex + 1);
-                if (line) {
-                    yield line;
-                }
-            }
-        }
     }
 
     private handleCommand(command: string): void {
@@ -167,6 +156,4 @@ async function main() {
     await adapter.start();
 }
 
-if (import.meta.main) {
     main();
-}

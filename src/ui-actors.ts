@@ -1,4 +1,4 @@
-import { Actor, Color, Font, Label, vec, Vector, ScreenElement, GraphicsGroup, Rectangle } from "excalibur";
+import { Actor, BaseAlign, Color, Font, Label, Rectangle, ScreenElement, TextAlign, Vector, vec } from "excalibur";
 
 export interface ButtonStyle {
     backgroundColor: Color;
@@ -47,8 +47,8 @@ export class Button extends Actor {
             font: new Font({
                 size: 16,
                 color: style.textColor,
-                textAlign: "center",
-                baseAlign: "middle"
+                textAlign: TextAlign.Center ,
+                baseAlign: BaseAlign.Middle,
             }),
             z: 1
         });
@@ -129,7 +129,7 @@ export class Checkbox extends Actor {
             font: new Font({
                 size: 16,
                 color: style.textColor,
-                baseAlign: "middle"
+                baseAlign: BaseAlign.Middle,
             })
         });
         this.bg.addChild(label);
@@ -171,7 +171,7 @@ export class TextButton extends Actor {
             font: new Font({
                 size: 14,
                 color: style.textColor,
-                baseAlign: "middle"
+                baseAlign: BaseAlign.Middle,
             })
         });
         this.addChild(this.label);

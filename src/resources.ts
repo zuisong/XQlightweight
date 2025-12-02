@@ -1,5 +1,5 @@
 // src/resources.ts
-import { ImageSource, Sound, Resource, Loader } from 'excalibur';
+import { ImageSource, Loader, Sound } from 'excalibur';
 import { PIECE_IMAGE_MAP } from './constants';
 
 // Board Image

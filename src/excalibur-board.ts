@@ -1,42 +1,42 @@
 // src/excalibur-board.ts
-import { Engine, DisplayMode, Color, Vector, Actor, Timer, vec, Scene, Label, Font, TextAlign, Rectangle, BaseAlign } from "excalibur";
-import { Resources } from "./resources";
+import { Actor, BaseAlign, Color, DisplayMode, Engine, Font, Label, Rectangle, TextAlign, Vector, vec } from "excalibur";
 import { PieceActor, SelectionActor, ThinkingActor } from "./actors";
-import { XiangQiEngine } from "./engine/index";
-import { Button, Checkbox, TextButton, Modal, type ButtonStyle } from "./ui-actors";
-import { CustomLoader } from './custom-loader';
 import {
-  IN_BOARD,
-  SRC,
-  DST,
-  MOVE,
-  SQUARE_FLIP,
-  SIDE_TAG,
-  FILE_X,
-  RANK_Y,
-  FILE_LEFT,
-  RANK_TOP,
-  CHR,
-  ASC
-} from "./engine/position";
-import {
-  BOARD_WIDTH,
   BOARD_HEIGHT,
   BOARD_OFFSET_X,
   BOARD_OFFSET_Y,
+  BOARD_WIDTH,
+  COLORS, 
   SQUARE_SIZE,
   THINKING_LEFT,
   THINKING_TOP,
-  TOTAL_WIDTH_HORIZONTAL,
-  UI_OFFSET_X_HORIZONTAL,
-  UI_OFFSET_Y_HORIZONTAL,
-  UI_LINE_HEIGHT,
-  TOTAL_WIDTH_VERTICAL, 
   TOTAL_HEIGHT_VERTICAL, 
+  TOTAL_WIDTH_HORIZONTAL,
+  TOTAL_WIDTH_VERTICAL, 
+  UI_LINE_HEIGHT,
+  UI_OFFSET_X_HORIZONTAL,
   UI_OFFSET_X_VERTICAL, 
-  UI_OFFSET_Y_VERTICAL,
-  COLORS
+  UI_OFFSET_Y_HORIZONTAL,
+  UI_OFFSET_Y_VERTICAL
 } from "./constants";
+import { CustomLoader } from './custom-loader';
+import { XiangQiEngine } from "./engine/index";
+import {
+  ASC, 
+  CHR,
+  DST,
+  FILE_LEFT,
+  FILE_X,
+  IN_BOARD,
+  MOVE,
+  RANK_TOP,
+  RANK_Y,
+  SIDE_TAG,
+  SQUARE_FLIP,
+  SRC
+} from "./engine/position";
+import { Resources } from "./resources";
+import { Button, type ButtonStyle, Checkbox, Modal, TextButton } from "./ui-actors";
 
 export const RESULT_UNKNOWN = 0;
 const RESULT_WIN = 1;
@@ -212,7 +212,7 @@ export class ExcaliburBoard {
       // We need to add actors to the modal's contentArea or just manage them manually when modal shows
       // Since Modal is a ScreenElement, its children move with it.
       
-      let my = 20; // Modal Y relative to contentArea top-left (which is centered)
+      const my = 20; // Modal Y relative to contentArea top-left (which is centered)
       // Actually Modal contentArea anchor is (0.5, 0.5). So (0,0) is center.
       // Let's make coordinates relative to top-left of modal content area.
       // TopLeft is (-width/2, -height/2).

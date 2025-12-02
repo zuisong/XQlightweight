@@ -1,8 +1,8 @@
 // src/actors.ts
-import { Actor, Vector, CollisionType, Color, Sprite } from "excalibur";
+import { Actor, Vector } from "excalibur";
+import { BOARD_OFFSET_X, BOARD_OFFSET_Y, PIECE_IMAGE_MAP, SQUARE_SIZE } from "./constants";
+import { FILE_X, RANK_Y } from "./engine/position";
 import { Resources } from "./resources";
-import { SQUARE_SIZE, BOARD_OFFSET_X, BOARD_OFFSET_Y, PIECE_IMAGE_MAP } from "./constants";
-import { FILE_X, RANK_Y, FILE_FLIP, RANK_FLIP } from "./engine/position";
 
 export class PieceActor extends Actor {
   public sq: number;

@@ -173,6 +173,10 @@ export class XiangQiEngine {
         return this._position.squares[sq];
     }
 
+    getMoveList(): number[] {
+        return this._position.mvList;
+    }
+
     // Additional methods for UCCI protocol (already there)
     getId(): { name: string; author: string } {
         return {

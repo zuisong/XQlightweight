@@ -4,7 +4,6 @@
   "author": "",
   "main": "index.js",
   "devDependencies": {
-    "@preact/preset-vite": "^2.10.2",
     "@types/react": "^19.2.7",
     "vite": "^7.2.6"
   },
@@ -17,7 +16,6 @@
     "check": "tsc --noEmit"
   },
   "dependencies": {
-    "excalibur": "^0.31.0",
-    "preact": "^10.27.2"
+    "excalibur": "^0.31.0"
   }
 }

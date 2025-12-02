@@ -4,7 +4,7 @@ import { PIECE_IMAGE_MAP } from './constants';
 
 // Board Image
 const boardImg = new ImageSource('images/board.jpg');
-const oosImg = new Gif('images/oos.gif'); // Selection overlay
+const oosImg = new ImageSource('images/oos.gif'); // Selection overlay
 
 // Piece Images
 const pieceImages: { [key: string]: ImageSource } = {};

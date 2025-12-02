@@ -1,5 +1,5 @@
 // src/actors.ts
-import { Actor, Vector } from "excalibur";
+import { Actor, Vector, Rectangle, Color } from "excalibur";
 import { BOARD_OFFSET_X, BOARD_OFFSET_Y, PIECE_IMAGE_MAP, SQUARE_SIZE } from "./constants";
 import { FILE_X, RANK_Y } from "./engine/position";
 import { Resources } from "./resources";

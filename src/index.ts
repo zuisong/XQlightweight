@@ -1,5 +1,5 @@
-import { type Board, RESULT_UNKNOWN } from "./board.ts"
-import { ASC, CHR, DST, FILE_LEFT, FILE_X, RANK_TOP, RANK_Y, SRC } from "./engine/position.ts"; // Directly from position.ts
+import { type ExcaliburBoard, RESULT_UNKNOWN } from "./excalibur-board";
+import { ASC, CHR, DST, FILE_LEFT, FILE_X, RANK_TOP, RANK_Y, SRC } from "./engine/position.ts";
 
 const board = () => window.board
 
@@ -45,23 +45,19 @@ export function restart_click() {
 export function retract_click() {
     const moveList = selMoveList();
     for (let i = board().engine.getHistoryLength(); i < moveList.children.length; i++) {
-        // Here, makeInternalMove expects an internal move number, but moveList.children[i].dataset.value!
-        // is the internal move number that was stored. So, Number.parseInt is correct.
-        board().engine.makeInternalMove(Number.parseInt(moveList.children[i].dataset.value!));
+        board().engine.makeInternalMove(Number.parseInt((moveList.children[i] as HTMLElement).dataset.value!));
     }
     board().retract();
-    // Remove extra moves from the list
     while (moveList.children.length > board().engine.getHistoryLength()) {
         moveList.removeChild(moveList.lastChild!);
     }
-    // Set the last move as selected
     if (moveList.children.length > 0) {
-        moveList.lastChild!.classList.add('selected');
+        (moveList.lastChild! as HTMLElement).classList.add('selected');
     }
 }
 
 declare global {
     interface Window {
-        board: Board
+        board: ExcaliburBoard
     }
 }

@@ -1,7 +1,7 @@
 import './index.css';
 
 import { h, render } from "preact";
-import { Board, RESULT_UNKNOWN, THINKING_LEFT, THINKING_TOP } from "./board.ts";
+import { ExcaliburBoard, RESULT_UNKNOWN } from "./excalibur-board";
 import {
   level_change,
   move2Iccs,
@@ -18,19 +18,7 @@ export function App() {
       <h1 class="title">象棋小巫师</h1>
       <div class="game-area">
         <div class="game-board-container">
-          <div id="container">
-            <img
-              id="thinking"
-              alt={"thinking"}
-              src={"images/thinking.gif"}
-              style={{
-                visibility: "hidden",
-                position: "absolute",
-                left: THINKING_LEFT,
-                top: THINKING_TOP,
-              }}
-            />
-          </div>
+          <canvas id="game" onContextMenu={(e) => e.preventDefault()}></canvas>
         </div>
         <div class="controls-sidebar">
           <div class="control-card">
@@ -112,7 +100,7 @@ const handleMoveClick = (e: any) => {
       }
     } else {
       for (let i = from; i <= to; i++) {
-        board.engine.makeInternalMove(Number(selMoveList().children[i].dataset.value)); // Use engine facade
+        board.engine.makeInternalMove(Number((selMoveList().children[i] as HTMLElement).dataset.value)); // Use engine facade
       }
     }
     board.flushBoard();
@@ -121,9 +109,7 @@ const handleMoveClick = (e: any) => {
 
 render(App(), document.body!);
 
-const container = document.getElementById("container")!;
-
-const board = new Board(container, "images/", "sounds/");
+const board = new ExcaliburBoard("game");
 window.board = board;
 
 board.millis = 10;

@@ -17,6 +17,7 @@
     "check": "tsc --noEmit"
   },
   "dependencies": {
+    "excalibur": "^0.31.0",
     "preact": "^10.27.2"
   }
 }

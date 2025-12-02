@@ -5,6 +5,7 @@
     "": {
       "name": "xqlightweight",
       "dependencies": {
+        "excalibur": "^0.31.0",
         "preact": "^10.27.2",
       },
       "devDependencies": {
@@ -216,6 +217,8 @@
     "escalade": ["escalade@3.2.0", "", {}, "sha512-WUj2qlxaQtO4g6Pq5c29GTcWGDyd8itL8zTlipgECz3JesAiiOKotd8JU6otB3PACgG6xkJUyVhboMS+bje/jA=="],
 
     "estree-walker": ["estree-walker@2.0.2", "", {}, "sha512-Rfkk/Mp/DL7JVje3u18FxFujQlTNR2q6QfMSMB7AvCBx91NGj/ba3kCfza0f6dVDbw7YlRf/nDrn7pQrCCyQ/w=="],
+
+    "excalibur": ["excalibur@0.31.0", "", {}, "sha512-xVNiRdv4N13XRG9lMbQdwhjSIB3TdXEd1v8dtx876k14rJZb0KyzfO7EHpU7nz/NB/mr8aobh45yo4o5JeaOrw=="],
 
     "fdir": ["fdir@6.5.0", "", { "peerDependencies": { "picomatch": "^3 || ^4" }, "optionalPeers": ["picomatch"] }, "sha512-tIbYtZbucOs0BRGqPJkshJUYdL+SDH7dVM8gjy+ERp3WAUjLEFJE+02kanyHtwjWOnwrKYBiwAmM0p4kLJAnXg=="],
 

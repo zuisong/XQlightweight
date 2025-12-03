@@ -119,7 +119,7 @@ export class Checkbox extends Actor {
             color: Color.fromHex('#3B82F6'),
             anchor: Vector.Zero
         });
-        this.checkIndicator.graphics.visible = checked;
+        this.checkIndicator.graphics.isVisible = checked;
         this.bg.addChild(this.checkIndicator);
 
         // Label
@@ -142,7 +142,7 @@ export class Checkbox extends Actor {
 
     toggle() {
         this.checked = !this.checked;
-        this.checkIndicator.graphics.visible = this.checked;
+        this.checkIndicator.graphics.isVisible = this.checked;
         this.callback(this.checked);
     }
 }
@@ -245,7 +245,7 @@ export class Modal extends ScreenElement {
         // Prevent clicks on content passing through
         this.contentArea.on('pointerup', (e) => e.cancel());
         
-        this.graphics.visible = false;
+        this.graphics.isVisible = false;
     }
 
     onInitialize(engine: any) {
@@ -267,7 +267,7 @@ export class Modal extends ScreenElement {
     }
 
     show() {
-        this.graphics.visible = true;
+        this.graphics.isVisible = true;
         // Re-center just in case
         if (this.scene && this.scene.engine) {
              this.contentArea.pos = vec(this.scene.engine.screen.resolution.width / 2, this.scene.engine.screen.resolution.height / 2);
@@ -277,11 +277,11 @@ export class Modal extends ScreenElement {
     }
 
     hide() {
-        this.graphics.visible = false;
+        this.graphics.isVisible = false;
         this.pos.x = -10000; // Move away to ensure no interaction
     }
     
     isOpen() {
-        return this.graphics.visible;
+        return this.graphics.isVisible;
     }
 }

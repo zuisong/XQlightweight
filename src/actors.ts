@@ -39,9 +39,9 @@ export class PieceActor extends Actor {
     const pieceName = PIECE_IMAGE_MAP[this.pieceType];
     if (pieceName && (Resources as any)[pieceName]) {
       this.graphics.use((Resources as any)[pieceName].toSprite());
-      this.graphics.visible = true;
+      this.graphics.isVisible = true;
     } else {
-        this.graphics.visible = false;
+        this.graphics.isVisible = false;
     }
   }
 
@@ -60,7 +60,7 @@ export class SelectionActor extends Actor {
             z: 5 // Below pieces (z=10), above board
         });
         this.graphics.use(Resources.OOS.toSprite());
-        this.graphics.visible = false; // Hidden by default
+        this.graphics.isVisible = false; // Hidden by default
     }
 
     select(sq: number, flipped: boolean) {
@@ -69,11 +69,11 @@ export class SelectionActor extends Actor {
         const rank = RANK_Y(displaySq);
         this.pos.x = BOARD_OFFSET_X + (file - 3) * SQUARE_SIZE;
         this.pos.y = BOARD_OFFSET_Y + (rank - 3) * SQUARE_SIZE;
-        this.graphics.visible = true;
+        this.graphics.isVisible = true;
     }
 
     deselect() {
-        this.graphics.visible = false;
+        this.graphics.isVisible = false;
     }
 }
 
@@ -83,15 +83,21 @@ export class ThinkingActor extends Actor {
             pos: new Vector(244, 272), // Centerish approximation, will be set by constant
             z: 20
         });
-        this.graphics.use(Resources.Thinking.toSprite());
-        this.graphics.visible = false;
+        this.graphics.isVisible = false; // Hidden by default initially
+    }
+    
+    initializeGraphics() {
+        const thinkingAnimation = Resources.Thinking.toAnimation();
+        if(thinkingAnimation){
+          this.graphics.use(thinkingAnimation);
+        }
     }
     
     showThinking() {
-        this.graphics.visible = true;
+        this.graphics.isVisible = true;
     }
 
     hideThinking() {
-        this.graphics.visible = false;
+        this.graphics.isVisible = false;
     }
 }

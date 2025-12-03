@@ -185,6 +185,7 @@ export class ExcaliburBoard {
     // Start with custom loader
     const customLoader = new CustomLoader();
     this.game.start(customLoader).then(() => {
+       this.thinkingActor.initializeGraphics(); // Initialize thinking animation graphics
        this.restart(); // Initial start
        const savedFen = this._onLoadGame(); // Attempt to load game after initial restart
        if (savedFen) {
@@ -610,12 +611,12 @@ export class ExcaliburBoard {
           const data = movesToRender[startIndex + i];
           if (data) {
               this.moveListActors[i].setText(data.text);
-              this.moveListActors[i].graphics.visible = true;
+              this.moveListActors[i].graphics.isVisible = true;
               // Highlight current?
               const isCurrent = (startIndex + i) === (movesToRender.length - 1);
               this.moveListActors[i].setSelected(isCurrent);
           } else {
-              this.moveListActors[i].graphics.visible = false;
+              this.moveListActors[i].graphics.isVisible = false;
           }
       }
   }
@@ -823,20 +824,20 @@ export class ExcaliburBoard {
               color: Color.Black
           }));
 
-          this.scoreBarBg.graphics.visible = true;
-          this.scoreBarRed.graphics.visible = true;
-          this.scoreBarBlack.graphics.visible = true;
+          this.scoreBarBg.graphics.isVisible = true;
+          this.scoreBarRed.graphics.isVisible = true;
+          this.scoreBarBlack.graphics.isVisible = true;
 
           if (this.scoreBarLabel) {
               this.scoreBarLabel.text = `红方胜率: ${(redRatio * 100).toFixed(0)}%`;
-              this.scoreBarLabel.graphics.visible = true;
+              this.scoreBarLabel.graphics.isVisible = true;
           }
       } else {
-          this.scoreBarBg.graphics.visible = false;
-          this.scoreBarRed.graphics.visible = false;
-          this.scoreBarBlack.graphics.visible = false;
+          this.scoreBarBg.graphics.isVisible = false;
+          this.scoreBarRed.graphics.isVisible = false;
+          this.scoreBarBlack.graphics.isVisible = false;
           if (this.scoreBarLabel) {
-              this.scoreBarLabel.graphics.visible = false;
+              this.scoreBarLabel.graphics.isVisible = false;
           }
       }
   }
@@ -880,7 +881,7 @@ export class ExcaliburBoard {
               const sel = this.selectionActors[idx++];
               sel.pos.x = BOARD_OFFSET_X + (file - 3) * SQUARE_SIZE;
               sel.pos.y = BOARD_OFFSET_Y + (rank - 3) * SQUARE_SIZE;
-              sel.graphics.visible = true;
+              sel.graphics.isVisible = true;
           }
       };
 

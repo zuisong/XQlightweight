@@ -3,13 +3,16 @@ import { Actor, Vector, Rectangle, Color } from "excalibur";
 import { BOARD_OFFSET_X, BOARD_OFFSET_Y, PIECE_IMAGE_MAP, SQUARE_SIZE } from "./constants";
 import { FILE_X, RANK_Y } from "./engine/position";
 import { Resources } from "./resources";
+import { PieceType } from "./engine";
+
+
 
 export class PieceActor extends Actor {
   public sq: number;
-  public pieceType: number;
+  public pieceType: PieceType;
   private _flipped: boolean = false;
 
-  constructor(sq: number, pieceType: number, flipped: boolean) {
+  constructor(sq: number, pieceType: PieceType, flipped: boolean) {
     super({
       width: SQUARE_SIZE,
       height: SQUARE_SIZE,
@@ -45,7 +48,7 @@ export class PieceActor extends Actor {
     }
   }
 
-  setPiece(type: number) {
+  setPiece(type: PieceType) {
       this.pieceType = type;
       this.updateGraphics();
   }
@@ -90,6 +93,7 @@ export class ThinkingActor extends Actor {
         const thinkingAnimation = Resources.Thinking.toAnimation();
         if(thinkingAnimation){
           this.graphics.use(thinkingAnimation);
+          this.graphics.anchor = Vector.Half; // Center the graphic around its position
         }
     }
     

@@ -186,12 +186,8 @@ export class ExcaliburBoard {
     const customLoader = new CustomLoader();
     this.game.start(customLoader).then(() => {
        this.thinkingActor.initializeGraphics(); // Initialize thinking animation graphics
-       this.restart(); // Initial start
        const savedFen = this._onLoadGame(); // Attempt to load game after initial restart
-       if (savedFen) {
-          this.engine.loadFen(savedFen);
-          this.flushBoard();
-       }
+       this.restart(savedFen); // Initial start
     });
   }
 
@@ -898,7 +894,7 @@ export class ExcaliburBoard {
       setTimeout(() => alert(msg), 250);
   }
 
-  restart(fen?: string) {
+  restart(fen: string | null = null) {
       if (this.busy) return;
       this.result = RESULT_UNKNOWN;
       const fenToLoad = fen || STARTUP_FEN[this.handicapIndex];

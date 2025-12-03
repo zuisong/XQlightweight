@@ -2,6 +2,23 @@
 import { ASC, DST, MOVE, Position, SRC } from "./position.ts";
 import { Search } from "./search.ts";
 
+export type PieceType = 
+|0
+|8
+|9
+|10
+|11
+|12
+|13
+|14
+|16
+|17
+|18
+|19
+|20
+|21
+|22
+;
 
 
 export class XiangQiEngine {
@@ -169,7 +186,7 @@ export class XiangQiEngine {
         return this._position.mvList.length;
     }
 
-    getPiece(sq: number): number {
+    getPiece(sq: number): PieceType {
         return this._position.squares[sq];
     }
 

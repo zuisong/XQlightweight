@@ -8,8 +8,7 @@ const oosImg = new ImageSource('images/oos.gif'); // Selection overlay
 
 // Piece Images
 const pieceImages: { [key: string]: Gif } = {};
-for (const key in PIECE_IMAGE_MAP) {
-  const pieceName = PIECE_IMAGE_MAP[key];
+for (const [_key, pieceName] of Object.entries(PIECE_IMAGE_MAP)) {
   pieceImages[pieceName] = new Gif(`images/${pieceName}.gif`);
 }
 const thinkingImg = new Gif('images/thinking.gif');

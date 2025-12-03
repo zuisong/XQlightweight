@@ -27,7 +27,8 @@ export const UI_LINE_HEIGHT = 40;
 export const FONT_SIZE = 20;
 
 // Piece names mapping to image files
-export const PIECE_IMAGE_MAP: { [key: number]: string } = {
+export const PIECE_IMAGE_MAP = {
+    0: "oo",   // Empty square
   // Red Pieces (sdPlayer = 0, pc is 8-14)
   8: "rk",   // Red King
   9: "ra",   // Red Advisor
@@ -45,11 +46,11 @@ export const PIECE_IMAGE_MAP: { [key: number]: string } = {
   20: "br",  // Black Rook
   21: "bc",  // Black Cannon
   22: "bp",  // Black Pawn
-};
+} as const;
 
 export const THINKING_SIZE = 32;
-export const THINKING_LEFT = (BOARD_WIDTH - THINKING_SIZE) / 2;
-export const THINKING_TOP = (BOARD_HEIGHT - THINKING_SIZE) / 2;
+export const THINKING_LEFT = BOARD_WIDTH / 2;
+export const THINKING_TOP = BOARD_HEIGHT / 2;
 
 // Engine's internal board representation
 export const FILE_LEFT_ENGINE = 3;

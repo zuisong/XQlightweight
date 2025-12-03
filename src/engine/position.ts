@@ -21,6 +21,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 */
 
 import { BOOK_DAT } from "./book.ts";
+import { PieceType } from "./index.ts";
 
 
 
@@ -513,14 +514,14 @@ rc4.nextLong();
 
 export class Position {
     sdPlayer = 0
-    squares: number[] = []
+    squares: PieceType[] = []
     zobristKey = 0
     zobristLock = 0
     vlWhite = 0
     vlBlack = 0
 
     mvList = [0];
-    pcList = [0];
+    pcList: PieceType[] = [0];
     keyList = [0];
     chkList: boolean[] = [false];
     distance = 0;
@@ -547,7 +548,7 @@ export class Position {
         this.distance = 0;
     }
 
-    addPiece(sq: number, pc: number, bDel = false) {
+    addPiece(sq: number, pc: PieceType, bDel = false) {
         let pcAdjust: number;
         this.squares[sq] = bDel ? 0 : pc;
         if (pc < 16) {
@@ -660,7 +661,7 @@ export class Position {
                 if (x <= FILE_RIGHT) {
                     const pt = CHAR_TO_PIECE(c);
                     if (pt >= 0) {
-                        this.addPiece(COORD_XY(x, y), pt + 8);
+                        this.addPiece(COORD_XY(x, y), (pt + 8) as PieceType);
                     }
                     x++;
                 }
@@ -668,7 +669,7 @@ export class Position {
                 if (x <= FILE_RIGHT) {
                     const pt = CHAR_TO_PIECE(CHR(ASC(c) + ASC("A") - ASC("a")));
                     if (pt >= 0) {
-                        this.addPiece(COORD_XY(x, y), pt + 16);
+                        this.addPiece(COORD_XY(x, y), (pt + 16) as PieceType);
                     }
                     x++;
                 }

@@ -1,17 +1,23 @@
+use fastrand;
 use lazy_static::lazy_static;
-use rand::Rng;
-use std::time::Instant;
 use wasm_bindgen::prelude::*;
 
 // --- Macros ---
+#[cfg(target_arch = "wasm32")]
 #[wasm_bindgen]
 extern "C" {
     #[wasm_bindgen(js_namespace = console)]
     fn log(s: &str);
 }
 
+#[cfg(target_arch = "wasm32")]
 macro_rules! console_log {
     ($($t:tt)*) => (log(&format_args!($($t)*).to_string()))
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+macro_rules! console_log {
+    ($($t:tt)*) => (println!("{}", &format_args!($($t)*).to_string()))
 }
 
 // --- Constants ---
@@ -405,44 +411,41 @@ pub fn shell_sort(mvs: &mut Vec<u16>, vls: &mut Vec<i32>) {
     }
 }
 
+struct ZobristData {
+    key_table: Vec<Vec<u64>>,
+    lock_table: Vec<Vec<u64>>,
+    key_player: u64,
+    lock_player: u64,
+}
+
 lazy_static! {
-    static ref ZOBRIST_KEY_TABLE: Vec<Vec<u64>> = {
-        let mut table = Vec::with_capacity(14);
+    static ref ZOBRIST: ZobristData = {
         let mut rc4 = Rc4::new(&[0]);
+        let key_player = rc4.next_long();
         rc4.next_long();
-        rc4.next_long();
+        let lock_player = rc4.next_long();
+
+        let mut key_table = Vec::with_capacity(14);
+        let mut lock_table = Vec::with_capacity(14);
+
         for _ in 0..14 {
             let mut keys = Vec::with_capacity(256);
-            for _ in 0..256 {
-                keys.push(rc4.next_long());
-            }
-            table.push(keys);
-        }
-        table
-    };
-    static ref ZOBRIST_LOCK_TABLE: Vec<Vec<u64>> = {
-        let mut table = Vec::with_capacity(14);
-        let mut rc4 = Rc4::new(&[0]);
-        rc4.next_long();
-        rc4.next_long();
-        for _ in 0..14 {
             let mut locks = Vec::with_capacity(256);
             for _ in 0..256 {
+                keys.push(rc4.next_long());
                 rc4.next_long();
                 locks.push(rc4.next_long());
             }
-            table.push(locks);
+            key_table.push(keys);
+            lock_table.push(locks);
         }
-        table
-    };
-    static ref ZOBRIST_KEY_PLAYER: u64 = {
-        let mut rc4 = Rc4::new(&[0]);
-        rc4.next_long()
-    };
-    static ref ZOBRIST_LOCK_PLAYER: u64 = {
-        let mut rc4 = Rc4::new(&[0]);
-        rc4.next_long();
-        rc4.next_long()
+
+        ZobristData {
+            key_table,
+            lock_table,
+            key_player,
+            lock_player,
+        }
     };
 }
 
@@ -672,6 +675,54 @@ impl Position {
         result
     }
 
+    pub fn get_piece(&self, sq: u8) -> u8 {
+        self.squares[sq as usize]
+    }
+
+    pub fn get_sd_player(&self) -> u8 {
+        self.sd_player
+    }
+
+    pub fn get_history_length(&self) -> usize {
+        self.mv_list.len()
+    }
+
+    pub fn last_move(&self) -> u16 {
+        *self.mv_list.last().unwrap_or(&0)
+    }
+
+    pub fn get_move_list(&self) -> Vec<u16> {
+        self.mv_list.clone()
+    }
+
+    pub fn rep_status(&self, recur: i32) -> i32 {
+        self.rep_status_internal(recur as u32) as i32
+    }
+
+    pub fn rep_value(&self, vl_rep: i32) -> i32 {
+        self.rep_value_internal(vl_rep as u32)
+    }
+
+    pub fn captured(&self) -> bool {
+        self.captured_internal()
+    }
+
+    pub fn zobrist_key(&self) -> u64 {
+        self.zobrist_key
+    }
+
+    pub fn zobrist_lock(&self) -> u64 {
+        self.zobrist_lock
+    }
+
+    pub fn mirror(&self) -> Position {
+        self.mirror_internal()
+    }
+
+    pub fn clone(&self) -> Position {
+        std::clone::Clone::clone(self)
+    }
+
     pub fn vl_white(&self) -> i32 {
         self.vl_white
     }
@@ -725,8 +776,8 @@ impl Position {
             };
             pc_adjust += 7;
         }
-        self.zobrist_key ^= ZOBRIST_KEY_TABLE[pc_adjust][sq as usize];
-        self.zobrist_lock ^= ZOBRIST_LOCK_TABLE[pc_adjust][sq as usize];
+        self.zobrist_key ^= ZOBRIST.key_table[pc_adjust][sq as usize];
+        self.zobrist_lock ^= ZOBRIST.lock_table[pc_adjust][sq as usize];
     }
 
     fn checked(&self) -> bool {
@@ -841,8 +892,8 @@ impl Position {
 
     fn change_side(&mut self) {
         self.sd_player = 1 - self.sd_player;
-        self.zobrist_key ^= *ZOBRIST_KEY_PLAYER;
-        self.zobrist_lock ^= *ZOBRIST_LOCK_PLAYER;
+        self.zobrist_key ^= ZOBRIST.key_player;
+        self.zobrist_lock ^= ZOBRIST.lock_player;
     }
 
     pub fn null_move(&mut self) {
@@ -1100,27 +1151,7 @@ impl Position {
         mvs
     }
 
-    pub fn get_piece(&self, sq: u8) -> u8 {
-        self.squares[sq as usize]
-    }
-
-    pub fn get_sd_player(&self) -> u8 {
-        self.sd_player
-    }
-
-    pub fn get_history_length(&self) -> usize {
-        self.mv_list.len()
-    }
-
-    pub fn last_move(&self) -> u16 {
-        *self.mv_list.last().unwrap_or(&0)
-    }
-
-    pub fn get_move_list(&self) -> Vec<u16> {
-        self.mv_list.clone()
-    }
-
-    pub fn rep_status(&self, recur_: u32) -> u32 {
+    pub fn rep_status_internal(&self, recur_: u32) -> u32 {
         let mut recur = recur_;
         let mut self_side = false;
         let mut perp_check = true;
@@ -1147,7 +1178,7 @@ impl Position {
         0
     }
 
-    pub fn rep_value(&self, vl_rep: u32) -> i32 {
+    pub fn rep_value_internal(&self, vl_rep: u32) -> i32 {
         let vl_return = (if (vl_rep & 2) == 0 {
             0
         } else {
@@ -1164,7 +1195,7 @@ impl Position {
         }
     }
 
-    pub fn captured(&self) -> bool {
+    pub fn captured_internal(&self) -> bool {
         *self.pc_list.last().unwrap_or(&0) > 0
     }
 
@@ -1200,10 +1231,10 @@ impl Position {
         }) > NULL_SAFE_MARGIN
     }
 
-    pub fn mirror(&self) -> Self {
+    pub fn mirror_internal(&self) -> Self {
         let mut pos = Position::new();
         pos.clear_board();
-        for sq in 0..=255u8 {
+        for sq in 0..=255 {
             let pc = self.squares[sq as usize];
             if pc > 0 {
                 pos.add_piece(mirror_square(sq), pc, ADD_PIECE);
@@ -1246,7 +1277,7 @@ impl Position {
 
         if index < 0 {
             mirror = true;
-            lock = self.mirror().zobrist_lock;
+            lock = self.mirror_internal().zobrist_lock;
             index = Self::binary_search(BOOK_DAT_RUST, lock as u32);
         }
         if index < 0 {
@@ -1281,12 +1312,12 @@ impl Position {
             return 0;
         }
 
-        let mut rng = rand::rng();
-        let rand_val = rng.random_range(0..value);
+        let mut rng = fastrand::Rng::new();
+        let rand_val = rng.usize(0..(value as usize));
 
-        let mut cumulative_value = 0;
+        let mut cumulative_value: usize = 0;
         for i in 0..mvs.len() {
-            cumulative_value += vls[i];
+            cumulative_value += vls[i] as usize;
             if rand_val < cumulative_value {
                 return mvs[i];
             }
@@ -1438,49 +1469,70 @@ impl Default for HashItem {
 
 #[wasm_bindgen]
 pub struct Search {
+    /// 哈希掩码，用于计算哈希表索引
     hash_mask: u64,
+    /// 搜索结果（最佳走法）
     mv_result: u16,
+    /// 当前局面
     pos: Position,
+    /// 搜索耗时（毫秒）
     all_millis: u128,
+    /// 置换表（Transposition Table），用于缓存搜索过的局面
     hash_table: Vec<HashItem>,
+    /// 历史表（History Heuristic），用于记录走法的好坏，优化排序
     history_table: Vec<u32>,
+    /// 搜索节点数
     all_nodes: u64,
+    /// 杀手走法表（Killer Heuristic），记录在某个深度产生截断的走法
     killer_table: Vec<[u16; 2]>,
-    start_time: Instant,
-    max_search_time: u128,
+    /// 搜索开始时间
+    start_time: f64,
+    /// 最大搜索时间限制
+    max_search_time: f64,
 }
 
 #[wasm_bindgen]
 impl Search {
     #[wasm_bindgen(constructor)]
-    pub fn new(pos: Position, hash_level: u32) -> Self {
+    pub fn new(pos: &Position, hash_level: u32) -> Self {
         let hash_mask = (1u64 << hash_level) - 1;
         let table_size = hash_mask as usize + 1;
 
         Search {
             hash_mask,
             mv_result: 0,
-            pos,
+            pos: pos.clone(),
             all_millis: 0,
             hash_table: vec![HashItem::default(); table_size],
             history_table: vec![0; 4096],
             all_nodes: 0,
             killer_table: vec![[0, 0]; LIMIT_DEPTH as usize],
-            start_time: Instant::now(),
-            max_search_time: 0,
+            start_time: 0.0,
+            max_search_time: 0.0,
         }
     }
 
-    pub fn search_main(&mut self, millis: u32) -> u16 {
-        self.max_search_time = millis as u128;
-        self.start_time = Instant::now();
+    /// 主搜索入口函数
+    ///
+    /// # 参数
+    /// * `millis` - 搜索时间限制（毫秒）
+    /// * `depth_limit` - 最大搜索深度限制
+    ///
+    /// # 返回值
+    /// 返回最佳走法的内部表示（u16）
+    pub fn search_main(&mut self, millis: u32, depth_limit: u32) -> u16 {
+        self.max_search_time = millis as f64;
+        self.start_time = 0.0;
         self.all_nodes = 0;
         self.mv_result = 0;
 
         let mut vl_root;
-        for depth in 1..=LIMIT_DEPTH {
+        // 迭代加深搜索（Iterative Deepening）
+        // 从深度 1 开始，逐步增加深度，直到达到限制或超时
+        for depth in 1..=depth_limit {
             vl_root = self.search_root(-MATE_VALUE, MATE_VALUE, depth);
-            if self.start_time.elapsed().as_millis() > self.max_search_time {
+            if false {
+                // Time check disabled for debugging
                 break;
             }
             if vl_root > WIN_VALUE || vl_root < -WIN_VALUE {
@@ -1585,12 +1637,23 @@ impl Search {
         }
     }
 
-    fn search_quiesc(&mut self, mut vl_alpha: i32, vl_beta: i32) -> i32 {
-        if self.start_time.elapsed().as_millis() > self.max_search_time {
+    /// 静态搜索函数（Quiescence Search）
+    /// 用于在主搜索结束后继续搜索直到局面平静，防止水平线效应
+    ///
+    /// # 参数
+    /// * `vl_alpha` - Alpha 值
+    /// * `vl_beta` - Beta 值
+    /// * `q_depth` - 当前静态搜索深度（用于防止无限递归）
+    fn search_quiesc(&mut self, mut vl_alpha: i32, vl_beta: i32, q_depth: u32) -> i32 {
+        if false {
             return 0;
         }
 
         self.all_nodes += 1;
+        if self.all_nodes % 10000 == 0 {
+            //  console_log!("QNode: {}, Dist: {}, QDepth: {}", self.all_nodes, self.pos.distance, q_depth);
+        }
+
         let mut vl = self.pos.mate_value();
         if vl >= vl_beta {
             return vl;
@@ -1599,7 +1662,7 @@ impl Search {
         if vl_rep > 0 {
             return self.pos.rep_value(vl_rep);
         }
-        if self.pos.distance >= LIMIT_DEPTH {
+        if self.pos.distance >= LIMIT_DEPTH || q_depth >= 32 {
             return self.pos.evaluate();
         }
 
@@ -1661,10 +1724,10 @@ impl Search {
             if !self.pos.make_move(current_mv) {
                 continue;
             }
-            vl = -self.search_quiesc(-vl_beta, -vl_alpha);
+            vl = -self.search_quiesc(-vl_beta, -vl_alpha, q_depth + 1);
             self.pos.undo_make_move();
 
-            if self.start_time.elapsed().as_millis() > self.max_search_time {
+            if false {
                 return 0;
             }
 
@@ -1683,13 +1746,24 @@ impl Search {
         }
     }
 
+    /// 全窗口/PVS搜索函数
+    ///
+    /// # 参数
+    /// * `vl_alpha` - Alpha 值（下界）
+    /// * `vl_beta` - Beta 值（上界）
+    /// * `depth` - 剩余搜索深度
+    /// * `no_null` - 是否允许空步裁剪（Null Move Pruning）
     fn search_full(&mut self, mut vl_alpha: i32, vl_beta: i32, depth: u32, no_null: bool) -> i32 {
-        if self.start_time.elapsed().as_millis() > self.max_search_time {
+        if self.all_nodes % 10000 == 0 {
+            // console_log!("Node: {}, Depth: {}", self.all_nodes, depth);
+        }
+        if false {
             return 0;
         }
 
+        // 到达叶子节点，进入静态搜索
         if depth <= 0 {
-            return self.search_quiesc(vl_alpha, vl_beta);
+            return self.search_quiesc(vl_alpha, vl_beta, 0);
         }
 
         self.all_nodes += 1;
@@ -1713,7 +1787,7 @@ impl Search {
             return self.pos.evaluate();
         }
 
-        if !no_null && !self.pos.in_check() && self.pos.null_okay() {
+        if !no_null && !self.pos.in_check() && self.pos.null_okay() && depth > NULL_DEPTH {
             self.pos.null_move();
             vl = -self.search_full(-vl_beta, 1 - vl_beta, depth - NULL_DEPTH - 1, true);
             self.pos.undo_null_move();
@@ -1788,6 +1862,12 @@ impl Search {
         vl_best
     }
 
+    /// 根节点搜索函数
+    ///
+    /// # 参数
+    /// * `vl_alpha` - Alpha 值
+    /// * `vl_beta` - Beta 值
+    /// * `depth` - 搜索深度
     fn search_root(&mut self, mut vl_alpha: i32, vl_beta: i32, depth: u32) -> i32 {
         let mv_hash_val = 0;
         let mut sort = MoveSort::new(
@@ -1822,7 +1902,7 @@ impl Search {
             }
             self.pos.undo_make_move();
 
-            if self.start_time.elapsed().as_millis() > self.max_search_time {
+            if false {
                 return 0;
             }
 

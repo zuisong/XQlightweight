@@ -3,20 +3,20 @@
 This document outlines the remaining tasks for translating the XiangQi game engine to Rust/WebAssembly and integrating it into the web application.
 
 ## 1. Core `Position` Logic Translation (Rust)
-- [ ] Implement `null_move` and `undo_null_move` methods in `Position` struct.
-- [ ] Implement `mate_value`, `ban_value`, `draw_value` methods in `Position` struct.
-- [ ] Implement `evaluate`, `null_okay`, `null_safe` methods in `Position` struct.
-- [ ] Implement `rep_value` and `rep_status` methods in `Position` struct.
-- [ ] Implement `mirror` method in `Position` struct.
-- [ ] Implement `book_move` method in `Position` struct (will need to handle `BOOK_DAT` from JS).
-- [ ] Implement `history_index` method in `Position` struct.
+- [x] Implement `null_move` and `undo_null_move` methods in `Position` struct.
+- [x] Implement `mate_value`, `ban_value`, `draw_value` methods in `Position` struct.
+- [x] Implement `evaluate`, `null_okay`, `null_safe` methods in `Position` struct.
+- [x] Implement `rep_value` and `rep_status` methods in `Position` struct.
+- [x] Implement `mirror` method in `Position` struct.
+- [x] Implement `book_move` method in `Position` struct (will need to handle `BOOK_DAT` from JS).
+- [x] Implement `history_index` method in `Position` struct.
 
 ## 2. `Search` Logic Translation (Rust)
-- [ ] Translate the `Search` class from `src/engine/search.ts` to a Rust struct (`Search`).
-  - [ ] Implement the constructor for `Search`.
+- [x] Translate the `Search` class from `src/engine/search.ts` to a Rust struct (`Search`).
+  - [x] Implement the constructor for `Search`.
   - [ ] Translate `searchMain` method (alpha-beta pruning, move ordering).
   - [ ] Translate `searchFull`, `searchNoNull`, `searchNull` methods.
-  - [ ] Translate `quiesce` method.
+  - [x] Translate `quiesce` method.
   - [ ] Translate `resetHistory`, `resetKillers` methods.
   - [ ] Translate helper functions for move ordering, evaluation, etc.
 

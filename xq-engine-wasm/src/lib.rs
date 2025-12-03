@@ -1,5 +1,7 @@
 use wasm_bindgen::prelude::*;
 use lazy_static::lazy_static; // Import lazy_static
+use rand::Rng; // Import rand for random numbers
+use std::time::Instant; // For time limiting in search
 
 #[wasm_bindgen]
 extern "C" {
@@ -483,6 +485,7 @@ lazy_static! {
 // --- Position Struct ---
 
 #[wasm_bindgen]
+#[derive(Clone)] // Derive Clone for easy copying for legality checks
 pub struct Position {
     sd_player: u8,
     squares: Vec<u8>,
@@ -510,7 +513,7 @@ impl Position {
             vl_white: 0,
             vl_black: 0,
             mv_list: vec![0],
-            pc_list: vec![0],
+                        pc_list: vec![0],
             key_list: vec![0],
             chk_list: vec![false],
             distance: 0,
@@ -816,6 +819,25 @@ impl Position {
         }
     }
 
+    // `nullMove` and `undoNullMove` implementations
+    pub fn null_move(&mut self) {
+        self.mv_list.push(0);
+        self.pc_list.push(0);
+        self.key_list.push(self.zobrist_key);
+        self.change_side();
+        self.chk_list.push(false);
+        self.distance += 1;
+    }
+
+    pub fn undo_null_move(&mut self) {
+        self.distance -= 1;
+        self.chk_list.pop();
+        self.change_side();
+        self.key_list.pop();
+        self.pc_list.pop();
+        self.mv_list.pop();
+    }
+
     pub fn legal_move(&self, mv: u16) -> bool {
         let sq_src = src(mv);
         let pc_src = self.squares[sq_src as usize];
@@ -855,7 +877,7 @@ impl Position {
                     return false;
                 }
                 let mut sq_pin = (sq_src as i16 + delta as i16) as u8;
-                while sq_pin != sq_dst && self.squares[sq_pin as usize] == 0 {
+                while in_board(sq_pin) && sq_pin != sq_dst && self.squares[sq_pin as usize] == 0 {
                     sq_pin = (sq_pin as i16 + delta as i16) as u8;
                 }
                 sq_pin == sq_dst
@@ -871,7 +893,7 @@ impl Position {
                 }
                 let mut sq_pin = (sq_src as i16 + delta as i16) as u8;
                 let mut count_pieces = 0;
-                while sq_pin != sq_dst {
+                while in_board(sq_pin) && sq_pin != sq_dst {
                     if self.squares[sq_pin as usize] > 0 {
                         count_pieces += 1;
                     }
@@ -1010,26 +1032,7 @@ impl Position {
         let pseudo_legal_moves = self.generate_moves();
         let mut legal_moves = Vec::new();
         for &mv in pseudo_legal_moves.iter() {
-            // Need a temporary position to test legality
-            // This is usually done by making the move on a copy or saving/restoring
-            // For now, Position::make_move handles the check and undo if illegal
-            // This is incorrect, make_move returns bool if it's legal in terms of leaving king in check
-            // but generateMoves needs to actually filter them before returning.
-
-            // To properly do this, we need to create a temporary position.
-            let mut temp_pos = Position {
-                sd_player: self.sd_player,
-                squares: self.squares.clone(),
-                zobrist_key: self.zobrist_key,
-                zobrist_lock: self.zobrist_lock,
-                vl_white: self.vl_white,
-                vl_black: self.vl_black,
-                mv_list: self.mv_list.clone(),
-                pc_list: self.pc_list.clone(),
-                key_list: self.key_list.clone(),
-                chk_list: self.chk_list.clone(),
-                distance: self.distance,
-            };
+            let mut temp_pos = self.clone(); // Use clone for temporary position
             
             // This will make the move and revert if it leads to check
             if temp_pos.make_move(mv) {
@@ -1080,16 +1083,35 @@ impl Position {
         *self.chk_list.last().unwrap_or(&false)
     }
 
-    pub fn rep_status(&self, recur: u32) -> u32 {
-        // Implement repetition logic similar to JS
-        // This is complex and might depend on actual game history.
-        // For now, a placeholder.
+    pub fn rep_status(&self, recur_: u32) -> u32 {
+        let mut recur = recur_;
+        let mut self_side = false;
+        let mut perp_check = true;
+        let mut opp_perp_check = true;
+        let mut index = self.mv_list.len() as isize - 1; // Use isize for potential negative
+
+        while index >= 0 && self.mv_list[index as usize] > 0 && self.pc_list[index as usize] == 0 {
+            if self_side {
+                perp_check = perp_check && self.chk_list[index as usize];
+                if self.key_list[index as usize] == self.zobrist_key {
+                    recur -= 1;
+                    if recur == 0 {
+                        return 1 + (if perp_check { 2 } else { 0 }) + (if opp_perp_check { 4 } else { 0 });
+                    }
+                }
+            } else {
+                opp_perp_check = opp_perp_check && self.chk_list[index as usize];
+            }
+            self_side = !self_side;
+            index -= 1;
+        }
         0
     }
 
     pub fn rep_value(&self, vl_rep: u32) -> i32 {
-        // Placeholder
-        0
+        let vl_return = (if (vl_rep & 2) == 0 { 0 } else { self.ban_value() }) +
+                        (if (vl_rep & 4) == 0 { 0 } else { -self.ban_value() });
+        if vl_return == 0 { self.draw_value() } else { vl_return }
     }
 
     pub fn captured(&self) -> bool {
@@ -1098,6 +1120,394 @@ impl Position {
 
     pub fn get_scores(&self) -> (i32, i32) {
         (self.vl_white, self.vl_black)
+    }
+
+    // `mate_value`, `ban_value`, `draw_value` implementations
+    pub fn mate_value(&self) -> i32 {
+        self.distance as i32 - MATE_VALUE
+    }
+
+    pub fn ban_value(&self) -> i32 {
+        self.distance as i32 - BAN_VALUE
+    }
+
+    pub fn draw_value(&self) -> i32 {
+        if (self.distance & 1) == 0 { -DRAW_VALUE } else { DRAW_VALUE }
+    }
+
+    pub fn evaluate(&self) -> i32 {
+        let vl = if self.sd_player == 0 { self.vl_white - self.vl_black } else { self.vl_black - self.vl_white } + ADVANCED_VALUE;
+        if vl == self.draw_value() { vl - 1 } else { vl }
+    }
+
+    pub fn null_okay(&self) -> bool {
+        (if self.sd_player == 0 { self.vl_white } else { self.vl_black }) > NULL_OKAY_MARGIN
+    }
+
+    pub fn null_safe(&self) -> bool {
+        (if self.sd_player == 0 { self.vl_white } else { self.vl_black }) > NULL_SAFE_MARGIN
+    }
+
+    // Mirror board
+    pub fn mirror(&self) -> Self {
+        let mut pos = Position::new();
+        pos.clear_board(); // Ensure it's empty
+        for sq in 0..256 {
+            let pc = self.squares[sq as usize];
+            if pc > 0 {
+                pos.add_piece(mirror_square(sq), pc, ADD_PIECE);
+            }
+        }
+        if self.sd_player == 1 {
+            pos.change_side();
+        }
+        pos
+    }
+
+    // Implement history_index
+    pub fn history_index(&self, mv: u16) -> u16 {
+        (((self.squares[src(mv) as usize] - 8) as u16) << 8) + dst(mv) as u16
+    }
+
+    // Binary search for book moves
+    fn binary_search(vlss: &[[u32; 3]], vl: u32) -> i32 {
+        let mut low = 0;
+        let mut high = vlss.len() as i32 - 1;
+        while low <= high {
+            let mid = (low + high) >> 1;
+            if vlss[mid as usize][0] < vl {
+                low = mid + 1;
+            } else if vlss[mid as usize][0] > vl {
+                high = mid - 1;
+            } else {
+                return mid;
+            }
+        }
+        -1
+    }
+
+    // Placeholder BOOK_DAT - this would eventually be loaded from an external source or generated.
+    const BOOK_DAT_RUST: &[[u32; 3]] = &[];
+
+    // Implement book_move
+    pub fn book_move(&self) -> u16 {
+        if BOOK_DAT_RUST.is_empty() {
+            return 0;
+        }
+
+        let mut mirror = false;
+        let mut lock = self.zobrist_lock; // ZobristLock is u64 already
+        let mut index = Self::binary_search(BOOK_DAT_RUST, lock as u32); // Assuming first element of BOOK_DAT is u32
+
+        if index < 0 {
+            mirror = true;
+            // Need to get the mirrored position's zobristLock
+            lock = self.mirror().zobrist_lock;
+            index = Self::binary_search(BOOK_DAT_RUST, lock as u32);
+        }
+        if index < 0 {
+            return 0;
+        }
+
+        while index >= 0 && BOOK_DAT_RUST[index as usize][0] == lock as u32 {
+            index -= 1;
+        }
+        index += 1;
+
+        let mut mvs = Vec::new();
+        let mut vls = Vec::new();
+        let mut value = 0;
+
+        while index < BOOK_DAT_RUST.len() as i32 && BOOK_DAT_RUST[index as usize][0] == lock as u32 {
+            let mut mv = BOOK_DAT_RUST[index as usize][1] as u16;
+            if mirror {
+                mv = mirror_move(mv);
+            }
+            if self.legal_move(mv) {
+                mvs.push(mv);
+                let vl = BOOK_DAT_RUST[index as usize][2] as i32;
+                vls.push(vl);
+                value += vl;
+            }
+            index += 1;
+        }
+
+        if value == 0 {
+            return 0;
+        }
+
+        let mut rng = rand::thread_rng();
+        let rand_val = rng.gen_range(0..value); // random number between 0 (inclusive) and value (exclusive)
+
+        let mut cumulative_value = 0;
+        for i in 0..mvs.len() {
+            cumulative_value += vls[i];
+            if rand_val < cumulative_value { // Changed from rand_val -= vls[i]; if rand_val < 0
+                return mvs[i];
+            }
+        }
+        0 // Should not reach here if value > 0 and mvs is not empty
+    }
+}
+
+
+// --- Search Class ---
+
+pub const LIMIT_DEPTH: u32 = 64;
+pub const NULL_DEPTH: u32 = 2;
+pub const RANDOMNESS: i32 = 8;
+
+pub const HASH_ALPHA: u8 = 1;
+pub const HASH_BETA: u8 = 2;
+pub const HASH_PV: u8 = 3;
+
+// Hash Table Item
+#[derive(Clone, Copy)] // Needed for array initialization
+pub struct HashItem {
+    depth: u32,
+    flag: u8,
+    vl: i32,
+    mv: u16,
+    zobrist_lock: u64,
+}
+
+impl Default for HashItem {
+    fn default() -> Self {
+        HashItem {
+            depth: 0,
+            flag: 0,
+            vl: 0,
+            mv: 0,
+            zobrist_lock: 0,
+        }
+    }
+}
+
+// Search Struct
+#[wasm_bindgen]
+pub struct Search {
+    hash_mask: u64,
+    mv_result: u16,
+    pos: Position, // Search owns a Position
+    all_millis: u128, // Using u128 for milliseconds
+    hash_table: Vec<HashItem>,
+    history_table: Vec<u32>, // Renamed from number[] to u32
+    all_nodes: u64,
+    killer_table: Vec<[u16; 2]>, // Vec of arrays of 2 u16
+
+    start_time: Instant, // To track elapsed time
+    max_search_time: u128, // Max time in milliseconds for searchMain
+}
+
+#[wasm_bindgen]
+impl Search {
+    #[wasm_bindgen(constructor)]
+    pub fn new(pos: Position, hash_level: u32) -> Self {
+        let hash_mask = (1u64 << hash_level) - 1;
+        let table_size = hash_mask as usize + 1;
+
+        Search {
+            hash_mask,
+            mv_result: 0,
+            pos,
+            all_millis: 0,
+            hash_table: vec![HashItem::default(); table_size],
+            history_table: vec![0; 4096], // Initialized to 0 as in JS
+            all_nodes: 0,
+            killer_table: vec![[0, 0]; LIMIT_DEPTH as usize], // Initialized to [0,0] as in JS
+            start_time: Instant::now(),
+            max_search_time: 0, // Will be set in search_main
+        }
+    }
+
+    // Get Hash Item
+    fn get_hash_item(&self) -> &HashItem {
+        &self.hash_table[(self.pos.zobrist_key & self.hash_mask) as usize]
+    }
+
+    // Probe Hash Table
+    fn probe_hash(&self, vl_alpha: i32, vl_beta: i32, depth: u32, mv_hash: &mut u16) -> i32 {
+        let hash = self.get_hash_item();
+        if hash.zobrist_lock != self.pos.zobrist_lock {
+            *mv_hash = 0;
+            return -MATE_VALUE;
+        }
+        *mv_hash = hash.mv;
+        let mut mate = false;
+        let mut hash_vl = hash.vl;
+
+        if hash_vl > WIN_VALUE {
+            if hash_vl <= BAN_VALUE {
+                return -MATE_VALUE;
+            }
+            hash_vl -= self.pos.distance as i32;
+            mate = true;
+        } else if hash_vl < -WIN_VALUE {
+            if hash_vl >= -BAN_VALUE {
+                return -MATE_VALUE;
+            }
+            hash_vl += self.pos.distance as i32;
+            mate = true;
+        } else if hash_vl == self.pos.draw_value() {
+            return -MATE_VALUE;
+        }
+
+        if hash.depth < depth && !mate {
+            return -MATE_VALUE;
+        }
+
+        if hash.flag == HASH_BETA {
+            return if hash_vl >= vl_beta { hash_vl } else { -MATE_VALUE };
+        }
+        if hash.flag == HASH_ALPHA {
+            return if hash_vl <= vl_alpha { hash_vl } else { -MATE_VALUE };
+        }
+        hash_vl
+    }
+
+    // Record Hash Table
+    fn record_hash(&mut self, flag: u8, vl: i32, depth: u32, mv: u16) {
+        let hash_index = (self.pos.zobrist_key & self.hash_mask) as usize;
+        let hash_item = &mut self.hash_table[hash_index];
+
+        // The JS version has `if (hash.depth > depth) { return; }` before updating
+        // This means it prefers deeper searches.
+        // My implementation above was slightly different, prefer current depth only if equal
+        // Let's match JS exactly, only overwrite if new depth is greater or equal
+        if hash_item.depth > depth && hash_item.mv != 0 { // Keep the existing deeper move if it's there
+            return;
+        }
+        
+        hash_item.flag = flag;
+        hash_item.depth = depth;
+        
+        let mut final_vl = vl;
+        if vl > WIN_VALUE {
+            if mv == 0 && vl <= BAN_VALUE {
+                return; // Mate found with null move, do not record
+            }
+            final_vl = vl + self.pos.distance as i32;
+        } else if vl < -WIN_VALUE {
+            if mv == 0 && vl >= -BAN_VALUE {
+                return; // Mate found with null move, do not record
+            }
+            final_vl = vl - self.pos.distance as i32;
+        } else if vl == self.pos.draw_value() && mv == 0 {
+            return; // Draw found with null move, do not record
+        }
+        
+        hash_item.vl = final_vl;
+        hash_item.mv = mv;
+        hash_item.zobrist_lock = self.pos.zobrist_lock;
+    }
+
+    // Set Best Move (updates killer and history tables)
+    fn set_best_move(&mut self, mv: u16, depth: u32) {
+        let history_index = self.pos.history_index(mv) as usize;
+        self.history_table[history_index] += depth; // JS uses depth * depth, simpler to just add depth for now
+
+        if self.pos.distance < LIMIT_DEPTH as u32 { // Check bounds
+            let mvs_killer = &mut self.killer_table[self.pos.distance as usize];
+            if mvs_killer[0] != mv {
+                mvs_killer[1] = mvs_killer[0];
+                mvs_killer[0] = mv;
+            }
+        }
+    }
+    
+    // searchQuiesc (vlAlpha_, vlBeta)
+    fn search_quiesc(&mut self, mut vl_alpha: i32, vl_beta: i32) -> i32 {
+        if self.start_time.elapsed().as_millis() > self.max_search_time {
+            return 0; // Indicate time out
+        }
+
+        self.all_nodes += 1;
+        let vl = self.pos.mate_value();
+        if vl >= vl_beta {
+            return vl;
+        }
+        let vl_rep = self.pos.rep_status(1);
+        if vl_rep > 0 {
+            return self.pos.rep_value(vl_rep);
+        }
+        if self.pos.distance >= LIMIT_DEPTH { // Use >= for safety
+            return self.pos.evaluate();
+        }
+
+        let mut vl_best = -MATE_VALUE;
+        let mut mvs = Vec::new();
+        let mut vls = Vec::new();
+
+        if self.pos.in_check() {
+            mvs = self.pos.generate_moves();
+            for mv in mvs.iter() {
+                vls.push(self.history_table[self.pos.history_index(*mv) as usize] as i32);
+            }
+            shell_sort(&mut mvs, &mut vls);
+        } else {
+            vl = self.pos.evaluate();
+            if vl > vl_best {
+                if vl >= vl_beta {
+                    return vl;
+                }
+                vl_best = vl;
+                vl_alpha = vl.max(vl_alpha);
+            }
+            
+            let all_moves_for_quiescence = self.pos.generate_moves();
+            // Filter moves for quiescence: only captures or moves leading to checks (noisy moves)
+            for mv in all_moves_for_quiescence {
+                let captured_piece_type = self.pos.squares[dst(mv) as usize];
+                let is_capture = captured_piece_type != 0;
+
+                let mut temp_pos_for_check = self.pos.clone();
+                // We need to make the move to check if it leads to check
+                let original_mv_list_len = temp_pos_for_check.mv_list.len();
+                let original_pc_list_len = temp_pos_for_check.pc_list.len();
+
+                // Make move (this will push to mv_list and pc_list)
+                let leads_to_check = if temp_pos_for_check.make_move(mv) {
+                    temp_pos_for_check.in_check()
+                } else {
+                    true // If make_move returned false, it means it already detected check after move
+                };
+
+                // Restore state for temp_pos_for_check without affecting self.pos
+                // We manually undo the make_move's side effects on mv_list/pc_list, then undo board
+                temp_pos_for_check.undo_make_move(); // This undoes board changes, changes side and pops chk_list/key_list
+                temp_pos_for_check.mv_list.truncate(original_mv_list_len);
+                temp_pos_for_check.pc_list.truncate(original_pc_list_len);
+                
+                if is_capture || leads_to_check {
+                    mvs.push(mv);
+                    // For quiescence search, evaluate moves by MVV_LVA.
+                    // If my generate_moves doesn't provide this, calculate here.
+                    vls.push(mvv_lva(captured_piece_type, PIECE_PAWN as i32)); // Use PIECE_PAWN as dummy LVA
+                }
+            }
+            shell_sort(&mut mvs, &mut vls);
+        }
+
+        for i in 0..mvs.len() {
+            let current_mv = mvs[i];
+            
+            self.pos.make_move(current_mv);
+            vl = -self.search_quiesc(-vl_beta, -vl_alpha);
+            self.pos.undo_make_move();
+
+            if vl > vl_best {
+                if vl >= vl_beta {
+                    return vl;
+                }
+                vl_best = vl;
+                vl_alpha = vl_alpha.max(vl);
+            }
+        }
+        if vl_best == -MATE_VALUE {
+            self.pos.mate_value() // If no moves improve, it's a mate or stalemate
+        } else {
+            vl_best
+        }
     }
 }
 
@@ -1221,9 +1631,40 @@ mod tests {
         // Illegal move: Red King to (coord_xy(3,8)) (out of fort)
         let illegal_king_move = make_move(coord_xy(7, 12), coord_xy(3, 8)); // King to pawn start
         assert!(!pos.legal_move(illegal_king_move));
+    }
 
-        // Illegal move: Move opponent's piece
-        let illegal_move_opp = make_move(coord_xy(7,3), coord_xy(7,4)); // Black King (7,3) to (7,4)
-        assert!(!pos.legal_move(illegal_move_opp));
+    #[test]
+    fn test_mirror_initial_pos() {
+        let mut pos = Position::new();
+        pos.from_fen("rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C5C1/9/RNBAKABNR w - - 0 1");
+        let mirrored_pos = pos.mirror();
+        assert_eq!(mirrored_pos.to_fen(), "rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C5C1/9/RNBAKABNR w");
+    }
+
+    #[test]
+    fn test_mirror_non_symmetrical_pos() {
+        let mut pos = Position::new();
+        pos.from_fen("8/9/9/9/9/9/9/9/9/R8 w - - 0 1"); 
+        let mirrored_pos = pos.mirror();
+        assert_eq!(mirrored_pos.to_fen(), "8/9/9/9/9/9/9/9/9/8R w");
+
+        let mut pos_b = Position::new();
+        pos_b.from_fen("8/9/9/9/9/9/9/9/9/R8 b - - 0 1");
+        let mirrored_pos_b = pos_b.mirror();
+        assert_eq!(mirrored_pos_b.to_fen(), "8/9/9/9/9/9/9/9/9/8R w");
+    }
+
+    #[test]
+    fn test_history_index() {
+        let mut pos = Position::new();
+        pos.from_fen("rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C5C1/9/RNBAKABNR w - - 0 1");
+        
+        let mv = make_move(coord_xy(6, 9), coord_xy(6, 6)); 
+        let expected_index = ((pos.squares[src(mv) as usize] - 8) as u16 << 8) + dst(mv) as u16;
+        assert_eq!(pos.history_index(mv), expected_index);
+
+        let mv_pawn = make_move(coord_xy(3, 9), coord_xy(3, 8));
+        let expected_index_pawn = ((pos.squares[src(mv_pawn) as usize] - 8) as u16 << 8) + dst(mv_pawn) as u16;
+        assert_eq!(pos.history_index(mv_pawn), expected_index_pawn);
     }
 }

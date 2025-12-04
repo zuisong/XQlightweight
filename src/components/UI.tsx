@@ -14,6 +14,7 @@ const UI: React.FC<UIProps> = ({ gameInstance }) => {
     const [scores, setScores] = useState({ red: 0, black: 0 });
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
     const [isRestartOpen, setIsRestartOpen] = useState(false);
+    const [showScore, setShowScore] = useState(true);
 
     const getScene = () => {
         return gameInstance?.scene.getScene('MainScene') as MainScene;
@@ -29,13 +30,20 @@ const UI: React.FC<UIProps> = ({ gameInstance }) => {
             setScores(newScores);
         };
 
+        const updateSettings = () => {
+            setShowScore(scene.showScore);
+        };
+
         scene.events.on('update-score', updateScores);
+        scene.events.on('update-settings', updateSettings);
 
         // Initial fetch
         setScores(scene.getScores());
+        setShowScore(scene.showScore);
 
         return () => {
             scene.events.off('update-score', updateScores);
+            scene.events.off('update-settings', updateSettings);
         };
     }, [gameInstance]);
 
@@ -75,17 +83,65 @@ const UI: React.FC<UIProps> = ({ gameInstance }) => {
             </div>
 
             {/* Scores */}
-            <div style={{
-                marginBottom: '15px',
-                display: 'flex',
-                justifyContent: 'space-around',
-                backgroundColor: '#333',
-                padding: '10px',
-                borderRadius: '8px'
-            }}>
-                <div style={{ color: '#FF6B6B', fontWeight: 'bold' }}>红方: {scores.red}</div>
-                <div style={{ color: '#4ECDC4', fontWeight: 'bold' }}>黑方: {scores.black}</div>
-            </div>
+            {showScore && (
+                <div style={{
+                    marginBottom: '15px',
+                    backgroundColor: '#333',
+                    padding: '10px',
+                    borderRadius: '8px'
+                }}>
+                    {(() => {
+                        const total = scores.red + scores.black;
+                        const redPercent = total === 0 ? 50 : Math.round((scores.red / total) * 100);
+                        const blackPercent = total === 0 ? 50 : 100 - redPercent;
+
+                        return (
+                            <div style={{
+                                display: 'flex',
+                                height: '24px',
+                                borderRadius: '12px',
+                                overflow: 'hidden',
+                                position: 'relative',
+                                backgroundColor: '#555'
+                            }}>
+                                {/* Red Bar */}
+                                <div style={{
+                                    width: `${redPercent}%`,
+                                    backgroundColor: '#FF6B6B',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'flex-start',
+                                    paddingLeft: '10px',
+                                    transition: 'width 0.3s ease',
+                                    whiteSpace: 'nowrap',
+                                    overflow: 'hidden'
+                                }}>
+                                    <span style={{ fontSize: '12px', fontWeight: 'bold', color: 'white' }}>
+                                        {redPercent > 10 ? `${redPercent}%` : ''}
+                                    </span>
+                                </div>
+
+                                {/* Black Bar */}
+                                <div style={{
+                                    width: `${blackPercent}%`,
+                                    backgroundColor: '#4ECDC4',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'flex-end',
+                                    paddingRight: '10px',
+                                    transition: 'width 0.3s ease',
+                                    whiteSpace: 'nowrap',
+                                    overflow: 'hidden'
+                                }}>
+                                    <span style={{ fontSize: '12px', fontWeight: 'bold', color: 'white' }}>
+                                        {blackPercent > 10 ? `${blackPercent}%` : ''}
+                                    </span>
+                                </div>
+                            </div>
+                        );
+                    })()}
+                </div>
+            )}
         </div>
     );
 };

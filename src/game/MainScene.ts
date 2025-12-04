@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { BOARD_HEIGHT, BOARD_OFFSET_X, BOARD_OFFSET_Y, BOARD_WIDTH, SQUARE_SIZE } from '../constants';
+import { BOARD_HEIGHT, BOARD_OFFSET_X, BOARD_OFFSET_Y, BOARD_WIDTH, SQUARE_SIZE, THINKING_SIZE } from '../constants';
 import { XiangQiEngine } from '../engine/index';
 import { DST, IN_BOARD, MOVE, SIDE_TAG, SRC } from '../engine/position';
 import { Assets } from './Assets';
@@ -10,7 +10,7 @@ export default class MainScene extends Phaser.Scene {
     private pieces: Map<number, Piece> = new Map();
     private selectedSq: number = 0;
     private selectionMarker!: Phaser.GameObjects.Image;
-    private thinkingMarker!: Phaser.GameObjects.Sprite;
+    private thinkingMarker!: Phaser.GameObjects.DOMElement;
     private isFlipped: boolean = false;
     private busy: boolean = false;
 
@@ -34,7 +34,8 @@ export default class MainScene extends Phaser.Scene {
         this.createPieces();
 
         // Thinking Marker
-        this.thinkingMarker = this.add.sprite(0, 0, 'thinking').setVisible(false).setDepth(20);
+        const cacheBuster = Date.now();
+        this.thinkingMarker = this.add.dom(0, 0).createFromHTML(`<div style="width: ${THINKING_SIZE}px; height: ${THINKING_SIZE}px; display: flex; justify-content: center; align-items: center; pointer-events: none;"><img src="images/thinking.gif?v=${cacheBuster}" style="width: 100%; height: 100%; object-fit: contain;" /></div>`).setVisible(false).setDepth(20);
         // Center thinking marker? Excalibur had specific coords.
         // this.thinkingActor.pos = new Vector(THINKING_LEFT, THINKING_TOP);
         // Let's just center it for now or use constants if imported.
@@ -366,6 +367,7 @@ export default class MainScene extends Phaser.Scene {
     public difficulty: number = 100; // millis (Default: Amateur)
     public moveMode: number = 0; // 0: User first, 1: Computer first, 2: No Computer
     public handicap: number = 0; // 0: None, 1: Left Knight, 2: Double Knights, 3: Nine Pieces
+    public showScore: boolean = true;
 
     private readonly STARTUP_FEN = [
         "rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C5C1/9/RNBAKABNR w - - 0 1", // No Handicap
@@ -393,6 +395,12 @@ export default class MainScene extends Phaser.Scene {
     public setHandicap(handicap: number) {
         this.handicap = handicap;
         this.saveGame();
+    }
+
+    public setShowScore(show: boolean) {
+        this.showScore = show;
+        this.saveGame();
+        this.events.emit('update-settings');
     }
 
     private initialFen: string = "";
@@ -443,6 +451,7 @@ export default class MainScene extends Phaser.Scene {
                 if (gameState.difficulty !== undefined) this.difficulty = gameState.difficulty;
                 if (gameState.soundEnabled !== undefined) this.soundEnabled = gameState.soundEnabled;
                 if (gameState.animated !== undefined) this.animated = gameState.animated;
+                if (gameState.showScore !== undefined) this.showScore = gameState.showScore;
 
                 // Restore Game
                 if (gameState.initialFen && gameState.moves) {
@@ -496,7 +505,8 @@ export default class MainScene extends Phaser.Scene {
             moveMode: this.moveMode,
             difficulty: this.difficulty,
             soundEnabled: this.soundEnabled,
-            animated: this.animated
+            animated: this.animated,
+            showScore: this.showScore
         };
         localStorage.setItem('xqlightweight_game_state', JSON.stringify(gameState));
     }

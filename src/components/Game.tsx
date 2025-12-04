@@ -23,7 +23,10 @@ const Game: React.FC<GameProps> = ({ setGameInstance }) => {
                 mode: Phaser.Scale.FIT,
                 autoCenter: Phaser.Scale.CENTER_BOTH
             },
-            backgroundColor: '#333333'
+            backgroundColor: '#333333',
+            dom: {
+                createContainer: true
+            }
         };
 
         const game = new Phaser.Game(config);
@@ -34,7 +37,7 @@ const Game: React.FC<GameProps> = ({ setGameInstance }) => {
         };
     }, [setGameInstance]);
 
-    return <div ref={gameRef} style={{ width: '100%', height: '100%', maxWidth: '100%', maxHeight: '100%' }} />;
+    return <div ref={gameRef} style={{ width: '100%', height: '100%', maxWidth: '100%', maxHeight: '100%', position: 'relative' }} />;
 };
 
 export default Game;

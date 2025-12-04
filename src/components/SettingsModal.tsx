@@ -119,6 +119,18 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, scene })
                     </label>
                 </div>
 
+                <div>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '10px', fontWeight: 'bold', cursor: 'pointer' }}>
+                        <input
+                            type="checkbox"
+                            defaultChecked={scene?.showScore ?? true}
+                            onChange={(e) => scene?.setShowScore(e.target.checked)}
+                            style={{ width: '20px', height: '20px' }}
+                        />
+                        显示评分
+                    </label>
+                </div>
+
                 <div style={{ display: 'flex', justifyContent: 'center', marginTop: '10px' }}>
                     <button onClick={onClose} style={{ padding: '10px 30px', cursor: 'pointer', backgroundColor: '#10B981', color: 'white', border: 'none', borderRadius: '5px', fontSize: '16px' }}>关闭</button>
                 </div>

@@ -13,6 +13,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, scene })
     const [soundEnabled, setSoundEnabled] = useState(true);
     const [moveMode, setMoveMode] = useState(0);
     const [handicap, setHandicap] = useState(0);
+    const [animated, setAnimated] = useState(true);
 
     useEffect(() => {
         if (scene) {
@@ -21,6 +22,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, scene })
             setSoundEnabled(scene.soundEnabled);
             setMoveMode(scene.moveMode);
             setHandicap(scene.handicap);
+            setAnimated(scene.animated);
             // Reverse map difficulty
             const diff = scene.difficulty;
             if (diff === 10) setDifficulty(0);
@@ -111,8 +113,11 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, scene })
                     <label style={{ display: 'flex', alignItems: 'center', gap: '10px', fontWeight: 'bold', cursor: 'pointer' }}>
                         <input
                             type="checkbox"
-                            defaultChecked={true}
-                            onChange={(e) => scene?.setAnimated(e.target.checked)}
+                            checked={animated}
+                            onChange={(e) => {
+                                setAnimated(e.target.checked);
+                                scene?.setAnimated(e.target.checked);
+                            }}
                             style={{ width: '20px', height: '20px' }}
                         />
                         开启动画

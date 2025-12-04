@@ -1,11 +1,11 @@
 import type React from 'react';
 import { useEffect, useState } from 'react';
-import type MainScene from '../game/MainScene';
+import type { PixiManager } from '../game/PixiManager';
 
 interface SettingsModalProps {
     isOpen: boolean;
     onClose: () => void;
-    scene: MainScene | null;
+    scene: PixiManager | null;
 }
 
 const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, scene }) => {
@@ -73,7 +73,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, scene })
 
                 <div>
                     <label style={{ fontWeight: 'bold' }}>难度:</label>
-                    <button
+                    <button type="button"
                         onClick={() => {
                             const nextDifficulty = (difficulty + 1) % 3;
                             handleDifficultyChange(nextDifficulty);
@@ -137,7 +137,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, scene })
                 </div>
 
                 <div style={{ display: 'flex', justifyContent: 'center', marginTop: '10px' }}>
-                    <button onClick={onClose} style={{ padding: '10px 30px', cursor: 'pointer', backgroundColor: '#10B981', color: 'white', border: 'none', borderRadius: '5px', fontSize: '16px' }}>关闭</button>
+                    <button type="button" onClick={onClose} style={{ padding: '10px 30px', cursor: 'pointer', backgroundColor: '#10B981', color: 'white', border: 'none', borderRadius: '5px', fontSize: '16px' }}>关闭</button>
                 </div>
             </div>
         </div>

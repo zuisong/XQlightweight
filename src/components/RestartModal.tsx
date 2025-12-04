@@ -1,11 +1,11 @@
 import type React from 'react';
 import { useEffect, useState } from 'react';
-import type MainScene from '../game/MainScene';
+import type { PixiManager } from '../game/PixiManager';
 
 interface RestartModalProps {
     isOpen: boolean;
     onClose: () => void;
-    scene: MainScene | null;
+    scene: PixiManager | null;
 }
 
 const RestartModal: React.FC<RestartModalProps> = ({ isOpen, onClose, scene }) => {

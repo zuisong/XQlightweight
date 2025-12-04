@@ -208,6 +208,133 @@ body {
   background-color: var(--primary-color);
 }
 
-.toggle-switch input:checked+.slider:before {
-  transform: translateX(20px);
+
+/* App Layout */
+.app-root {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  align-content: center;
+  background-color: #333;
+  flex-wrap: wrap;
+  overflow: hidden;
+  padding: 10px;
+  gap: 20px;
+  box-sizing: border-box;
+}
+
+.game-wrapper {
+  width: 100%;
+  max-width: 521px;
+  aspect-ratio: 521/577;
+  flex-shrink: 0;
+  max-height: 90vh;
+  /* Allow more height on desktop if needed */
+  position: relative;
+  /* Ensure canvas positioning context */
+}
+
+.game-wrapper canvas {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: contain;
+  display: block;
+}
+
+.ui-wrapper {
+  width: 100%;
+  max-width: 521px;
+  height: auto;
+  flex: 1 1 300px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  max-height: 90vh;
+}
+
+/* UI Component */
+.ui-root {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  padding: 10px;
+  color: white;
+  background-color: #444;
+  box-sizing: border-box;
+  border-radius: 8px;
+  /* Add some rounding */
+}
+
+.ui-controls-grid {
+  margin-bottom: 15px;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+
+.ui-score-board {
+  margin-bottom: 15px;
+  background-color: #333;
+  padding: 10px;
+  border-radius: 8px;
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+  .app-root {
+    flex-direction: column;
+    flex-wrap: nowrap;
+    /* Prevent wrapping, force column */
+    justify-content: center;
+    /* Center vertically */
+    padding: 20px;
+    /* Increase padding */
+    gap: 20px;
+  }
+
+  .game-wrapper {
+    width: auto;
+    /* Allow shrinking */
+    max-width: 100%;
+    /* Don't exceed screen */
+    height: auto;
+    max-height: 55vh;
+    /* Reduce max height slightly to give more room */
+    aspect-ratio: 521/577;
+    margin: 0 auto;
+    /* Center horizontally */
+  }
+
+  .ui-wrapper {
+    width: 100%;
+    max-width: none;
+    flex: 0 1 auto;
+    /* Don't force fill, allow centering */
+    max-height: 40vh;
+    /* Limit height */
+    min-height: 0;
+    /* Allow shrinking */
+    overflow-y: auto;
+    /* Allow scrolling within UI if needed */
+  }
+
+  .ui-root {
+    padding: 10px;
+    background-color: #444;
+    height: auto;
+    /* Allow auto height */
+  }
+
+  .ui-controls-grid {
+    gap: 10px;
+  }
+
+  .button {
+    padding: 10px 0;
+    font-size: 14px;
+  }
 }

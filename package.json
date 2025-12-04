@@ -3,12 +3,13 @@
   "version": "1.0.0",
   "author": "",
   "main": "index.js",
+  "packageManager": "bun",
   "devDependencies": {
+    "@types/howler": "^2.2.12",
     "@types/node": "^24.10.1",
     "@types/react": "^19.2.7",
     "@types/react-dom": "^19.2.3",
-    "@vitejs/plugin-react-swc": "^4.2.2",
-    "vite": "^7.2.6"
+    "vite": "^8.0.0-beta.0"
   },
   "keywords": [],
   "license": "ISC",
@@ -19,7 +20,8 @@
     "check": "tsc --noEmit"
   },
   "dependencies": {
-    "phaser": "^3.90.0",
+    "howler": "^2.2.4",
+    "pixi.js": "^8.14.3",
     "react": "^19.2.1",
     "react-dom": "^19.2.1"
   }

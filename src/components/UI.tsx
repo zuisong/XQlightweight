@@ -1,13 +1,13 @@
 
-import type Phaser from 'phaser';
+
 import type React from 'react';
 import { useEffect, useState } from 'react';
-import type MainScene from '../game/MainScene';
+import type { PixiManager } from '../game/PixiManager';
 import RestartModal from './RestartModal';
 import SettingsModal from './SettingsModal';
 
 interface UIProps {
-    gameInstance: Phaser.Game | null;
+    gameInstance: PixiManager | null;
 }
 
 const UI: React.FC<UIProps> = ({ gameInstance }) => {
@@ -17,7 +17,7 @@ const UI: React.FC<UIProps> = ({ gameInstance }) => {
     const [showScore, setShowScore] = useState(true);
 
     const getScene = () => {
-        return gameInstance?.scene.getScene('MainScene') as MainScene;
+        return gameInstance;
     };
 
     useEffect(() => {
@@ -48,16 +48,7 @@ const UI: React.FC<UIProps> = ({ gameInstance }) => {
     }, [gameInstance]);
 
     return (
-        <div style={{
-            width: '100%',
-            height: '100%',
-            display: 'flex',
-            flexDirection: 'column',
-            padding: '10px', // Reduced padding for mobile
-            color: 'white',
-            backgroundColor: '#444',
-            boxSizing: 'border-box'
-        }}>
+        <div className="ui-root">
             <SettingsModal
                 isOpen={isSettingsOpen}
                 onClose={() => setIsSettingsOpen(false)}
@@ -70,26 +61,16 @@ const UI: React.FC<UIProps> = ({ gameInstance }) => {
             />
 
             {/* Control Buttons - Grid Layout */}
-            <div style={{
-                marginBottom: '15px',
-                display: 'grid',
-                gridTemplateColumns: 'repeat(4, 1fr)',
-                gap: '8px'
-            }}>
-                <button onClick={() => setIsSettingsOpen(true)} style={buttonStyle}>设置</button>
-                <button onClick={() => setIsRestartOpen(true)} style={buttonStyle}>重开</button>
-                <button onClick={() => getScene()?.retract()} style={buttonStyle}>悔棋</button>
-                <button onClick={() => getScene()?.recommend()} style={buttonStyle}>提示</button>
+            <div className="ui-controls-grid">
+                <button type="button" onClick={() => setIsSettingsOpen(true)} style={buttonStyle}>设置</button>
+                <button type="button" onClick={() => setIsRestartOpen(true)} style={buttonStyle}>重开</button>
+                <button type="button" onClick={() => getScene()?.retract()} style={buttonStyle}>悔棋</button>
+                <button type="button" onClick={() => getScene()?.recommend()} style={buttonStyle}>提示</button>
             </div>
 
             {/* Scores */}
             {showScore && (
-                <div style={{
-                    marginBottom: '15px',
-                    backgroundColor: '#333',
-                    padding: '10px',
-                    borderRadius: '8px'
-                }}>
+                <div className="ui-score-board">
                     {(() => {
                         const total = scores.red + scores.black;
                         const redPercent = total === 0 ? 50 : Math.round((scores.red / total) * 100);

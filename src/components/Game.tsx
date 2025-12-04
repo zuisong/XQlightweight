@@ -1,10 +1,10 @@
-import Phaser from 'phaser';
+import { Application } from 'pixi.js';
 import type React from 'react';
 import { useEffect, useRef } from 'react';
-import MainScene from '../game/MainScene';
+import { PixiManager } from '../game/PixiManager';
 
 interface GameProps {
-    setGameInstance: (game: Phaser.Game) => void;
+    setGameInstance: (game: PixiManager) => void;
 }
 
 const Game: React.FC<GameProps> = ({ setGameInstance }) => {
@@ -13,31 +13,49 @@ const Game: React.FC<GameProps> = ({ setGameInstance }) => {
     useEffect(() => {
         if (!gameRef.current) return;
 
-        const config: Phaser.Types.Core.GameConfig = {
-            type: Phaser.AUTO,
-            width: 521, // Total Width Horizontal from constants
-            height: 577, // Board Height from constants
-            parent: gameRef.current,
-            scene: [MainScene],
-            scale: {
-                mode: Phaser.Scale.FIT,
-                autoCenter: Phaser.Scale.CENTER_BOTH
-            },
-            backgroundColor: '#333333',
-            dom: {
-                createContainer: true
+        const app = new Application();
+        let mounted = true;
+        let initialized = false;
+
+        const init = async () => {
+            await app.init({
+                width: 521,
+                height: 577,
+                backgroundColor: '#333333',
+                resolution: window.devicePixelRatio || 1,
+                autoDensity: true,
+            });
+
+            if (!mounted) {
+                app.destroy(true, { children: true, texture: true });
+                return;
+            }
+
+            initialized = true;
+
+            if (gameRef.current) {
+                gameRef.current.appendChild(app.canvas);
+            }
+
+            const manager = new PixiManager(app);
+            await manager.init();
+
+            if (mounted) {
+                setGameInstance(manager);
             }
         };
 
-        const game = new Phaser.Game(config);
-        setGameInstance(game);
+        init();
 
         return () => {
-            game.destroy(true);
+            mounted = false;
+            if (initialized) {
+                app.destroy(true, { children: true, texture: true });
+            }
         };
     }, [setGameInstance]);
 
-    return <div ref={gameRef} style={{ width: '100%', height: '100%', maxWidth: '100%', maxHeight: '100%', position: 'relative' }} />;
+    return <div ref={gameRef} style={{ width: '100%', height: '100%', maxWidth: '100%', maxHeight: '100%', position: 'relative', display: 'flex', justifyContent: 'center' }} />;
 };
 
 export default Game;

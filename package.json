@@ -6,6 +6,8 @@
   "devDependencies": {
     "@types/node": "^24.10.1",
     "@types/react": "^19.2.7",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react-swc": "^4.2.2",
     "vite": "^7.2.6"
   },
   "keywords": [],
@@ -17,6 +19,8 @@
     "check": "tsc --noEmit"
   },
   "dependencies": {
-    "excalibur": "^0.31.0"
+    "phaser": "^3.90.0",
+    "react": "^19.2.1",
+    "react-dom": "^19.2.1"
   }
 }

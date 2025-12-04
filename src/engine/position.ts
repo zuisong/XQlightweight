@@ -21,7 +21,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 */
 
 import { BOOK_DAT } from "./book.ts";
-import { PieceType } from "./index.ts";
+import type { PieceType } from "./index.ts";
 
 
 

@@ -2,13 +2,19 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap');
 
 :root {
-  --primary-color: #3B82F6; /* Blue 500 */
-  --primary-color-dark: #2563EB; /* Blue 600 */
-  --text-color-primary: #1F2937; /* Gray 800 */
-  --text-color-secondary: #6B7280; /* Gray 500 */
-  --background-color: #F3F4F6; /* Gray 100 */
+  --primary-color: #3B82F6;
+  /* Blue 500 */
+  --primary-color-dark: #2563EB;
+  /* Blue 600 */
+  --text-color-primary: #1F2937;
+  /* Gray 800 */
+  --text-color-secondary: #6B7280;
+  /* Gray 500 */
+  --background-color: #F3F4F6;
+  /* Gray 100 */
   --surface-color: #FFFFFF;
-  --border-color: #D1D5DB; /* Gray 300 */
+  --border-color: #D1D5DB;
+  /* Gray 300 */
   --shadow-color-light: rgba(0, 0, 0, 0.05);
   --shadow-color-medium: rgba(0, 0, 0, 0.1);
   --font-family: 'Inter', sans-serif;
@@ -49,10 +55,12 @@ body {
 
 .game-area {
   display: grid;
-  grid-template-columns: 521px 250px 250px; /* Board (fixed 521px), Controls (250px), Moves (250px) */
+  grid-template-columns: 521px 250px 250px;
+  /* Board (fixed 521px), Controls (250px), Moves (250px) */
   gap: calc(var(--spacing-unit) * 4);
   width: 100%;
-  align-items: flex-start; /* Prevent items from stretching */
+  align-items: flex-start;
+  /* Prevent items from stretching */
 }
 
 .game-board-container {
@@ -60,7 +68,8 @@ body {
   border-radius: 12px;
   padding: 0;
   box-shadow: 0 4px 6px -1px var(--shadow-color-light), 0 2px 4px -1px var(--shadow-color-medium);
-  width: 521px; /* Set to exact board image width */
+  width: 521px;
+  /* Set to exact board image width */
 }
 
 #container {
@@ -72,7 +81,8 @@ body {
   flex-direction: column;
   gap: calc(var(--spacing-unit) * 3);
   width: 250px;
-  min-height: 500px; /* Ensure a minimum height */
+  min-height: 500px;
+  /* Ensure a minimum height */
 }
 
 .control-card {
@@ -101,9 +111,9 @@ body {
 }
 
 .button-group {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: var(--spacing-unit) * 2;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--spacing-unit) * 2;
 }
 
 .button {
@@ -128,38 +138,39 @@ body {
 }
 
 .button-secondary {
-    background-color: var(--surface-color);
-    color: var(--text-color-primary);
-    border: 1px solid var(--border-color);
+  background-color: var(--surface-color);
+  color: var(--text-color-primary);
+  border: 1px solid var(--border-color);
 }
 
 .button-secondary:hover {
-    background-color: #F9FAFB; /* Gray 50 */
+  background-color: #F9FAFB;
+  /* Gray 50 */
 }
 
 .select-group select {
-    width: 100%;
-    padding: var(--spacing-unit) * 1.5;
-    border-radius: 8px;
-    border: 1px solid var(--border-color);
-    background-color: var(--surface-color);
-    color: var(--text-color-primary);
-    font-size: 1rem;
-    cursor: pointer;
-    appearance: none;
-    -webkit-appearance: none;
-    -moz-appearance: none;
-    background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg xmlns="http%3A//www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"%3E%3Cpath fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /%3E%3C/svg%3E');
-    background-repeat: no-repeat;
-    background-position: right 1rem center;
-    background-size: 1.25em;
+  width: 100%;
+  padding: var(--spacing-unit) * 1.5;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  background-color: var(--surface-color);
+  color: var(--text-color-primary);
+  font-size: 1rem;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg xmlns="http%3A//www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"%3E%3Cpath fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /%3E%3C/svg%3E');
+  background-repeat: no-repeat;
+  background-position: right 1rem center;
+  background-size: 1.25em;
 }
 
 .toggle-group {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: var(--spacing-unit) 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-unit) 0;
 }
 
 .toggle-switch {
@@ -193,46 +204,10 @@ body {
   transition: transform 0.2s;
 }
 
-.toggle-switch input:checked + .slider {
+.toggle-switch input:checked+.slider {
   background-color: var(--primary-color);
 }
 
-.toggle-switch input:checked + .slider:before {
+.toggle-switch input:checked+.slider:before {
   transform: translateX(20px);
-}
-
-.move-list-container {
-    height: 577px; /* Match the height of the game board */
-    overflow-y: auto;
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
-}
-
-/* Specific styles for the move list */
-.move-list {
-  list-style: none;
-  padding: var(--spacing-unit);
-  margin: 0;
-}
-
-.move-item {
-  padding: var(--spacing-unit);
-  font-size: 0.9em;
-  cursor: pointer;
-  transition: background-color 0.2s ease;
-  border-bottom: 1px solid var(--border-color);
-}
-
-.move-item:last-child {
-  border-bottom: none;
-}
-
-.move-item:hover {
-  background-color: var(--background-color);
-}
-
-.move-item.selected {
-  background-color: var(--primary-color);
-  color: white;
-  font-weight: 500;
 }

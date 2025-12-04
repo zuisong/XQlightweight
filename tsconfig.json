@@ -1,9 +1,12 @@
 {
   "compilerOptions": {
     "target": "ESNext",
-    "lib": ["DOM", "DOM.Iterable", "ESNext"],
+    "lib": [
+      "DOM",
+      "DOM.Iterable",
+      "ESNext"
+    ],
     "jsx": "react-jsx",
-    "jsxImportSource": "preact",
     "module": "ESNext",
     "moduleResolution": "bundler",
     "allowImportingTsExtensions": true,
@@ -14,5 +17,7 @@
     "skipLibCheck": true,
     "noEmit": true // NoEmit should be true when using a bundler like Vite
   },
-  "include": ["src"]
+  "include": [
+    "src"
+  ]
 }

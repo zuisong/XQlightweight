@@ -513,18 +513,18 @@ for (let i = 0; i < 14; i++) {
 rc4.nextLong();
 
 export class Position {
-    sdPlayer = 0
-    squares: PieceType[] = []
-    zobristKey = 0
-    zobristLock = 0
-    vlWhite = 0
-    vlBlack = 0
+    sdPlayer = 0; // 当前走棋方 (0: 红方, 1: 黑方)
+    squares: PieceType[] = []; // 棋盘数组，存储每个格子的棋子 (0: 空, >0: 棋子)
+    zobristKey = 0; // Zobrist 键值，用于局面哈希 (校验和)
+    zobristLock = 0; // Zobrist 锁值，用于解决哈希冲突 (校验和)
+    vlWhite = 0; // 红方总价值 (子力评分)
+    vlBlack = 0; // 黑方总价值 (子力评分)
 
-    mvList = [0];
-    pcList: PieceType[] = [0];
-    keyList = [0];
-    chkList: boolean[] = [false];
-    distance = 0;
+    mvList = [0]; // 历史走法列表，用于悔棋和检测长打
+    pcList: PieceType[] = [0]; // 历史被吃棋子列表，用于悔棋
+    keyList = [0]; // 历史 Zobrist 键值列表，用于检测重复局面
+    chkList: boolean[] = [false]; // 历史将军状态列表
+    distance = 0; // 距离根节点的步数 (搜索深度)
 
 
 
@@ -533,13 +533,26 @@ export class Position {
     // squares, mvList, pcList, keyList, chkList;
     // }
 
+    // 棋子列表: [side][index] -> square
+    // side: 0=红方, 1=黑方
+    // index: 0=帅/将, 1-2=仕/士, 3-4=相/象, 5-6=马, 7-8=车, 9-10=炮, 11-15=兵/卒
+    // value: 0=死棋, >0=棋子位置坐标
+    pieceList: number[][] = [[], []];
+
+    // 清空棋盘
     clearBoard() {
         this.sdPlayer = 0;
         this.squares = Array(256).fill(0);
         this.zobristKey = this.zobristLock = 0;
         this.vlWhite = this.vlBlack = 0;
+        // 初始化棋子列表
+        this.pieceList = [
+            new Array(16).fill(0), // 红方
+            new Array(16).fill(0)  // 黑方
+        ];
     }
 
+    // 初始化不可逆状态 (用于从 FEN 加载后重置历史)
     setIrrev() {
         this.mvList = [0];
         this.pcList = [0];
@@ -548,23 +561,98 @@ export class Position {
         this.distance = 0;
     }
 
+    // 在棋盘上添加或移除棋子
+    // sq: 棋盘坐标
+    // pc: 棋子类型
+    // bDel: true=移除, false=添加
     addPiece(sq: number, pc: PieceType, bDel = false) {
         let pcAdjust: number;
         this.squares[sq] = bDel ? 0 : pc;
+
+        // Update Piece List
+        if (pc > 0) {
+            const side = (pc & 16) === 0 ? 0 : 1;
+            const type = pc - 8 - (side << 3); // 计算棋子类型索引 0..6
+            // We need to find a slot for this piece.
+            // Since we don't have a direct mapping from piece instance to index,
+            // we use a simple strategy: fill the first available slot for that type.
+            // BUT, this is slow for `addPiece` if we have to search.
+            // However, `addPiece` is only called during setup and capture/uncapture.
+            // During setup (fromFen), we can just fill sequentially.
+            // During capture (bDel=true), we need to find the square `sq` in the list and clear it.
+            // During uncapture (bDel=false), we need to find an empty slot and fill it.
+
+            // Simplified Piece List for Move Gen:
+            // We just need to know where the pieces are.
+            // Let's use specific ranges for types to make it faster.
+            // King: 0
+            // Advisor: 1-2
+            // Bishop: 3-4
+            // Knight: 5-6
+            // Rook: 7-8
+            // Cannon: 9-10
+            // Pawn: 11-15
+
+            let startIndex = 0;
+            let endIndex = 0;
+            switch (type) {
+                case PIECE_KING: startIndex = 0; endIndex = 0; break;
+                case PIECE_ADVISOR: startIndex = 1; endIndex = 2; break;
+                case PIECE_BISHOP: startIndex = 3; endIndex = 4; break;
+                case PIECE_KNIGHT: startIndex = 5; endIndex = 6; break;
+                case PIECE_ROOK: startIndex = 7; endIndex = 8; break;
+                case PIECE_CANNON: startIndex = 9; endIndex = 10; break;
+                case PIECE_PAWN: startIndex = 11; endIndex = 15; break;
+            }
+
+            if (bDel) {
+                // Remove piece at sq
+                let found = false;
+                for (let i = startIndex; i <= endIndex; i++) {
+                    if (this.pieceList[side][i] === sq) {
+                        this.pieceList[side][i] = 0;
+                        found = true;
+                        break;
+                    }
+                }
+                // if (!found) console.warn(`Failed to remove piece ${pc} at ${sq} from side ${side}`);
+            } else {
+                // Add piece at sq
+                let found = false;
+                for (let i = startIndex; i <= endIndex; i++) {
+                    if (this.pieceList[side][i] === 0) {
+                        this.pieceList[side][i] = sq;
+                        found = true;
+                        break;
+                    }
+                }
+                // if (!found) console.warn(`Failed to add piece ${pc} at ${sq} to side ${side}`);
+            }
+        }
+
         if (pc < 16) {
             pcAdjust = pc - 8;
-            this.vlWhite += bDel ? -PIECE_VALUE[pcAdjust][sq] :
-                PIECE_VALUE[pcAdjust][sq];
+            // Safety check for pcAdjust range
+            if (pcAdjust >= 0 && pcAdjust < PIECE_VALUE.length) {
+                this.vlWhite += bDel ? -PIECE_VALUE[pcAdjust][sq] :
+                    PIECE_VALUE[pcAdjust][sq];
+            }
         } else {
             pcAdjust = pc - 16;
-            this.vlBlack += bDel ? -PIECE_VALUE[pcAdjust][SQUARE_FLIP(sq)] :
-                PIECE_VALUE[pcAdjust][SQUARE_FLIP(sq)];
+            // Safety check for pcAdjust range
+            if (pcAdjust >= 0 && pcAdjust < PIECE_VALUE.length) {
+                this.vlBlack += bDel ? -PIECE_VALUE[pcAdjust][SQUARE_FLIP(sq)] :
+                    PIECE_VALUE[pcAdjust][SQUARE_FLIP(sq)];
+            }
             pcAdjust += 7;
         }
-        this.zobristKey ^= PreGen_zobristKeyTable[pcAdjust][sq];
-        this.zobristLock ^= PreGen_zobristLockTable[pcAdjust][sq];
+        if (pcAdjust >= 0 && pcAdjust < PreGen_zobristKeyTable.length) {
+            this.zobristKey ^= PreGen_zobristKeyTable[pcAdjust][sq];
+            this.zobristLock ^= PreGen_zobristLockTable[pcAdjust][sq];
+        }
     }
 
+    // 移动棋子 (内部方法，不检查合法性)
     movePiece(mv: number) {
         const sqSrc = SRC(mv);
         const sqDst = DST(mv);
@@ -574,11 +662,14 @@ export class Position {
             this.addPiece(sqDst, pc, DEL_PIECE);
         }
         pc = this.squares[sqSrc];
+        // Optimization: Direct update for move?
+        // For now, rely on addPiece to be correct.
         this.addPiece(sqSrc, pc, DEL_PIECE);
         this.addPiece(sqDst, pc, ADD_PIECE);
         this.mvList.push(mv);
     }
 
+    // 撤销移动棋子
     undoMovePiece() {
         const mv = this.mvList.pop()!;
         const sqSrc = SRC(mv);
@@ -592,12 +683,16 @@ export class Position {
         }
     }
 
+    // 交换走棋方
     changeSide() {
         this.sdPlayer = 1 - this.sdPlayer;
         this.zobristKey ^= PreGen_zobristKeyPlayer;
         this.zobristLock ^= PreGen_zobristLockPlayer;
     }
 
+    // 执行走法
+    // mv: 走法
+    // 返回值: 是否合法 (是否导致被将军)
     makeMove(mv: number) {
         const zobristKey = this.zobristKey;
         this.movePiece(mv);
@@ -612,6 +707,7 @@ export class Position {
         return true;
     }
 
+    // 撤销走法
     undoMakeMove() {
         this.distance--;
         this.chkList.pop();
@@ -620,24 +716,28 @@ export class Position {
         this.undoMovePiece();
     }
 
+    // 执行空着 (Null Move)
     nullMove() {
-        this.mvList.push(0);
-        this.pcList.push(0);
-        this.keyList.push(this.zobristKey);
+        const zobristKey = this.zobristKey;
         this.changeSide();
+        this.pcList.push(0);
+        this.mvList.push(0);
+        this.keyList.push(zobristKey);
         this.chkList.push(false);
         this.distance++;
     }
 
+    // 撤销空着
     undoNullMove() {
         this.distance--;
         this.chkList.pop();
-        this.changeSide();
         this.keyList.pop();
-        this.pcList.pop();
         this.mvList.pop();
+        this.pcList.pop();
+        this.changeSide();
     }
 
+    // 从 FEN 串加载局面
     fromFen(fen: string) {
         this.clearBoard();
         let y = RANK_TOP;
@@ -692,6 +792,7 @@ export class Position {
         this.setIrrev();
     }
 
+    // 生成 FEN 串
     toFen() {
         let fen = "";
         for (let y = RANK_TOP; y <= RANK_BOTTOM; y++) {
@@ -717,15 +818,23 @@ export class Position {
             (this.sdPlayer === 0 ? " w" : " b");
     }
 
+    // 生成所有伪合法走法 (Pseudo-Legal Moves)
+    // vls: 如果不为 null，则只生成吃子走法，并存储价值到 vls
     generateMoves(vls: number[] | null) {
         const mvs = [];
         const pcSelfSide = SIDE_TAG(this.sdPlayer);
         const pcOppSide = OPP_SIDE_TAG(this.sdPlayer);
-        for (let sqSrc = 0; sqSrc < 256; sqSrc++) {
+
+        const pieces = this.pieceList[this.sdPlayer];
+
+        for (let i = 0; i < 16; i++) {
+            const sqSrc = pieces[i];
+            if (sqSrc === 0) continue;
+
             const pcSrc = this.squares[sqSrc];
-            if ((pcSrc & pcSelfSide) === 0) {
-                continue;
-            }
+            // Safety check, though pieceList should be synced
+            if (pcSrc === 0) continue;
+
             switch (pcSrc - pcSelfSide) {
                 case PIECE_KING:
                     for (let i = 0; i < 4; i++) {
@@ -857,10 +966,10 @@ export class Position {
                         }
                     }
                     break;
-                case PIECE_PAWN: {
-                    let sqDst = SQUARE_FORWARD(sqSrc, this.sdPlayer);
+                case PIECE_PAWN:
+                    var sqDst = sqSrc + (this.sdPlayer === 0 ? -16 : 16);
                     if (IN_BOARD(sqDst)) {
-                        const pcDst = this.squares[sqDst];
+                        var pcDst = this.squares[sqDst];
                         if (vls == null) {
                             if ((pcDst & pcSelfSide) === 0) {
                                 mvs.push(MOVE(sqSrc, sqDst));
@@ -874,7 +983,7 @@ export class Position {
                         for (let delta = -1; delta <= 1; delta += 2) {
                             sqDst = sqSrc + delta;
                             if (IN_BOARD(sqDst)) {
-                                const pcDst = this.squares[sqDst];
+                                var pcDst = this.squares[sqDst];
                                 if (vls == null) {
                                     if ((pcDst & pcSelfSide) === 0) {
                                         mvs.push(MOVE(sqSrc, sqDst));
@@ -887,12 +996,12 @@ export class Position {
                         }
                     }
                     break;
-                }
             }
         }
         return mvs;
     }
 
+    // 判断走法是否合法 (仅检查基本规则，不检查是否被将军)
     legalMove(mv: number) {
         const sqSrc = SRC(mv);
         const pcSrc = this.squares[sqSrc];
@@ -916,12 +1025,12 @@ export class Position {
                 return SAME_HALF(sqSrc, sqDst) && BISHOP_SPAN(sqSrc, sqDst) &&
                     this.squares[BISHOP_PIN(sqSrc, sqDst)] === 0;
             case PIECE_KNIGHT: {
-                const sqPin_1 = KNIGHT_PIN(sqSrc, sqDst);
-                return sqPin_1 !== sqSrc && this.squares[sqPin_1] === 0;
+                const sqPin = KNIGHT_PIN(sqSrc, sqDst);
+                return sqPin !== sqSrc && this.squares[sqPin] === 0;
             }
             case PIECE_ROOK:
             case PIECE_CANNON: {
-                let delta:number;
+                let delta: number;
                 if (SAME_RANK(sqSrc, sqDst)) {
                     delta = (sqDst < sqSrc ? -1 : 1);
                 } else if (SAME_FILE(sqSrc, sqDst)) {
@@ -934,7 +1043,7 @@ export class Position {
                     sqPin += delta;
                 }
                 if (sqPin === sqDst) {
-                    return pcDst === 0 || pcSrc - pcSelfSide === PIECE_ROOK;
+                    return pcDst === 0 || pcSrc - pcSelfSide !== PIECE_CANNON;
                 }
                 if (pcDst === 0 || pcSrc - pcSelfSide !== PIECE_CANNON) {
                     return false;
@@ -955,6 +1064,7 @@ export class Position {
         }
     }
 
+    // 判断当前方是否被将军
     checked(): boolean {
         const pcSelfSide = SIDE_TAG(this.sdPlayer);
         const pcOppSide = OPP_SIDE_TAG(this.sdPlayer);

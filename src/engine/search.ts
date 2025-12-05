@@ -61,23 +61,29 @@ const PHASE_KILLER_1 = 1;
 const PHASE_KILLER_2 = 2;
 const PHASE_GEN_MOVES = 3;
 const PHASE_REST = 4;
-class MoveSort {
+const MAX_MOVES = 128;
+const MAX_DEPTH = 64;
+const MOVE_STACK_SIZE = MAX_MOVES * MAX_DEPTH;
+const GLOBAL_MOVE_STACK = new Int32Array(MOVE_STACK_SIZE);
+const GLOBAL_VALUE_STACK = new Int32Array(MOVE_STACK_SIZE);
 
-    mvs: number[] = []
-    vls: number[];
-    mvHash: number;
-    pos: Position;
-    mvKiller1: number
-    mvKiller2: number
-    historyTable: number[];
-    phase: number;
-    singleReply: boolean;
-    index: number;
+// 走法排序类
+class MoveSort {
+    mvHash: number; // 置换表中的最佳走法 (Hash Move)
+    pos: Position; // 当前局面引用
+    mvKiller1: number; // 第一杀手走法
+    mvKiller2: number; // 第二杀手走法
+    historyTable: number[]; // 历史表引用
+    phase: number; // 当前排序阶段
+    singleReply: boolean; // 是否只有唯一应着 (用于优化)
+    index: number; // 当前走法索引
+
+    // 栈指针 (用于全局走法栈)
+    start: number;
+    end: number;
 
     constructor(mvHash: number,
         pos: Position, killerTable: number[][], historyTable: number[]) {
-        this.mvs = [];
-        this.vls = [];
         this.mvHash = this.mvKiller1 = this.mvKiller2 = 0;
         this.pos = pos;
         this.historyTable = historyTable;
@@ -85,7 +91,12 @@ class MoveSort {
         this.index = 0;
         this.singleReply = false;
 
+        // 根据当前搜索深度计算在全局栈中的起始位置
+        this.start = pos.distance * MAX_MOVES;
+        this.end = this.start;
+
         if (pos.inCheck()) {
+            // 如果被将军，只生成解将走法
             this.phase = PHASE_REST;
             const mvsAll = pos.generateMoves(null);
             for (let i = 0; i < mvsAll.length; i++) {
@@ -94,19 +105,52 @@ class MoveSort {
                     continue;
                 }
                 pos.undoMakeMove();
-                this.mvs.push(mv);
-                this.vls.push(mv === mvHash ? 0x7fffffff :
-                    historyTable[pos.historyIndex(mv)]);
+
+                // 存入全局栈
+                GLOBAL_MOVE_STACK[this.end] = mv;
+                GLOBAL_VALUE_STACK[this.end] = mv === mvHash ? 0x7fffffff :
+                    historyTable[pos.historyIndex(mv)];
+                this.end++;
             }
-            shellSort(this.mvs, this.vls);
-            this.singleReply = this.mvs.length === 1;
+            this.shellSortStack();
+            this.singleReply = (this.end - this.start) === 1;
         } else {
+            // 否则，初始化杀手走法
             this.mvHash = mvHash;
             this.mvKiller1 = killerTable[pos.distance][0];
             this.mvKiller2 = killerTable[pos.distance][1];
         }
     }
 
+    // 对栈中的走法进行希尔排序
+    shellSortStack() {
+        const count = this.end - this.start;
+        if (count <= 1) return;
+
+        let stepLevel = 1;
+        while (SHELL_STEP[stepLevel] < count) {
+            stepLevel++;
+        }
+        stepLevel--;
+        while (stepLevel > 0) {
+            const step = SHELL_STEP[stepLevel];
+            for (let i = step; i < count; i++) {
+                const mvBest = GLOBAL_MOVE_STACK[this.start + i];
+                const vlBest = GLOBAL_VALUE_STACK[this.start + i];
+                let j = i - step;
+                while (j >= 0 && vlBest > GLOBAL_VALUE_STACK[this.start + j]) {
+                    GLOBAL_MOVE_STACK[this.start + j + step] = GLOBAL_MOVE_STACK[this.start + j];
+                    GLOBAL_VALUE_STACK[this.start + j + step] = GLOBAL_VALUE_STACK[this.start + j];
+                    j -= step;
+                }
+                GLOBAL_MOVE_STACK[this.start + j + step] = mvBest;
+                GLOBAL_VALUE_STACK[this.start + j + step] = vlBest;
+            }
+            stepLevel--;
+        }
+    }
+
+    // 获取下一个走法
     next() {
         switch (this.phase) {
             case PHASE_HASH:
@@ -136,17 +180,27 @@ class MoveSort {
             // deno-lint-ignore no-fallthrough
             case PHASE_GEN_MOVES:
                 this.phase = PHASE_REST;
-                this.mvs = this.pos.generateMoves(null);
-                this.vls = [];
-                for (let i = 0; i < this.mvs.length; i++) {
-                    this.vls.push(this.historyTable[this.pos.historyIndex(this.mvs[i])]);
+                // Generate moves directly into stack?
+                // generateMoves returns array currently.
+                // To fully optimize, generateMoves should write to stack.
+                // For now, copy from array to stack.
+                // 生成所有走法并存入栈
+                const mvs = this.pos.generateMoves(null);
+
+                this.start = this.pos.distance * MAX_MOVES;
+                this.end = this.start;
+
+                for (let i = 0; i < mvs.length; i++) {
+                    GLOBAL_MOVE_STACK[this.end] = mvs[i];
+                    GLOBAL_VALUE_STACK[this.end] = this.historyTable[this.pos.historyIndex(mvs[i])];
+                    this.end++;
                 }
-                shellSort(this.mvs, this.vls);
+                this.shellSortStack();
                 this.index = 0;
             // No Break
             default:
-                while (this.index < this.mvs.length) {
-                    const mv = this.mvs[this.index];
+                while (this.index < (this.end - this.start)) {
+                    const mv = GLOBAL_MOVE_STACK[this.start + this.index];
                     this.index++;
                     if (mv !== this.mvHash && mv !== this.mvKiller1 && mv !== this.mvKiller2) {
                         return mv;
@@ -353,7 +407,7 @@ export class Search {
             if (mv <= 0) {
                 break;
             }
-     
+
             if (!this.pos.makeMove(mv)) {
                 continue;
             }
@@ -394,7 +448,7 @@ export class Search {
     searchRoot(depth: number) {
         let vlBest = -MATE_VALUE;
         const sort = new MoveSort(this.mvResult, this.pos, this.killerTable, this.historyTable);
-        
+
         while (true) {
             const mv = sort.next()
             if (mv <= 0) {
@@ -404,7 +458,7 @@ export class Search {
                 continue;
             }
             const newDepth = this.pos.inCheck() ? depth : depth - 1;
-            let vl:number;
+            let vl: number;
             if (vlBest === -MATE_VALUE) {
                 vl = -this.searchFull(-MATE_VALUE, MATE_VALUE, newDepth, true);
             } else {
@@ -477,7 +531,7 @@ export class Search {
         const t = Date.now();
         for (let i = 1; i <= depth; i++) {
             const vl = this.searchRoot(i);
-            this.allMillis = Date.now()- t;
+            this.allMillis = Date.now() - t;
             if (this.allMillis > millis) {
                 break;
             }

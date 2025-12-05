@@ -227,7 +227,7 @@ export default class MainScene extends Phaser.Scene {
             const computerMove = this.computerMove();
             this.playSound(computerMove ? "loss" : "win");
             // Alert or UI update for game over
-            console.log(computerMove ? "You Lost!" : "You Won!");
+            alert(computerMove ? "你输了！" : "你赢了！");
             this.busy = false;
             return;
         }
@@ -238,13 +238,13 @@ export default class MainScene extends Phaser.Scene {
             const WIN_VALUE_THRESHOLD = 9000;
             if (vlRep > -WIN_VALUE_THRESHOLD && vlRep < WIN_VALUE_THRESHOLD) {
                 this.playSound("draw");
-                console.log("Draw by Repetition");
+                alert("双方不变作和");
             } else if (this.computerMove() === (vlRep < 0)) {
                 this.playSound("loss");
-                console.log("Loss by Repetition");
+                alert("长打作负");
             } else {
                 this.playSound("win");
-                console.log("Win by Repetition");
+                alert("长打作负"); // Opponent loses
             }
             this.busy = false;
             return;

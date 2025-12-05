@@ -9,7 +9,7 @@ export class Assets {
         scene.load.image('thinking', 'images/thinking.gif');
 
         // Pieces
-        Object.entries(PIECE_IMAGE_MAP).forEach(([key, value]) => {
+        Object.entries(PIECE_IMAGE_MAP).forEach(([_key, value]) => {
             scene.load.image(value, `images/${value}.gif`);
         });
 

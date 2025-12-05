@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { BOARD_HEIGHT, BOARD_OFFSET_X, BOARD_OFFSET_Y, BOARD_WIDTH, SQUARE_SIZE, THINKING_SIZE } from '../constants';
+import { BOARD_HEIGHT, BOARD_OFFSET_X, BOARD_OFFSET_Y, BOARD_WIDTH, SQUARE_SIZE } from '../constants';
 import { XiangQiEngine } from '../engine/index';
 import { DST, IN_BOARD, MOVE, SIDE_TAG, SRC } from '../engine/position';
 import { Assets } from './Assets';
@@ -10,8 +10,8 @@ export default class MainScene extends Phaser.Scene {
     private pieces: Map<number, Piece> = new Map();
     private selectedSq: number = 0;
     private selectionMarker!: Phaser.GameObjects.Image;
-    private thinkingMarker!: Phaser.GameObjects.DOMElement;
     private isFlipped: boolean = false;
+    private thinkingMarker!: Phaser.GameObjects.DOMElement;
     private busy: boolean = false;
 
     constructor() {
@@ -33,13 +33,17 @@ export default class MainScene extends Phaser.Scene {
         // Initialize Pieces
         this.createPieces();
 
-        // Thinking Marker
-        const cacheBuster = Date.now();
-        this.thinkingMarker = this.add.dom(0, 0).createFromHTML(`<div style="width: ${THINKING_SIZE}px; height: ${THINKING_SIZE}px; display: flex; justify-content: center; align-items: center; pointer-events: none;"><img src="images/thinking.gif?v=${cacheBuster}" style="width: 100%; height: 100%; object-fit: contain;" /></div>`).setVisible(false).setDepth(20);
-        // Center thinking marker? Excalibur had specific coords.
-        // this.thinkingActor.pos = new Vector(THINKING_LEFT, THINKING_TOP);
-        // Let's just center it for now or use constants if imported.
-        this.thinkingMarker.setPosition(BOARD_WIDTH / 2, BOARD_HEIGHT / 2);
+        // Thinking marker as DOMElement (GIF)
+        const img = document.createElement('img');
+        img.src = 'images/thinking.gif';
+        img.style.width = '32px';
+        img.style.height = '32px';
+        img.style.pointerEvents = 'none';
+
+        this.thinkingMarker = this.add.dom(BOARD_WIDTH / 2, BOARD_HEIGHT / 2, img)
+            .setOrigin(0.5)
+            .setDepth(1000)
+            .setVisible(false);
 
         // Input Handling
         this.input.on('pointerdown', this.handlePointerDown, this);
@@ -115,7 +119,7 @@ export default class MainScene extends Phaser.Scene {
             return;
         }
 
-        const displaySq = this.isFlipped ? 254 - this.selectedSq : this.selectedSq;
+        const _displaySq = this.isFlipped ? 254 - this.selectedSq : this.selectedSq;
         // Re-use logic from Piece or just calculate
         // We can just ask the piece at that square for its position?
         // But the piece might be hidden (if we selected an empty square? No, we only select own pieces).
@@ -273,11 +277,7 @@ export default class MainScene extends Phaser.Scene {
 
         // Use setTimeout to allow UI to update and show thinking marker
         setTimeout(() => {
-            // Run search in a non-blocking way if possible, but JS is single threaded.
-            // For now, blocking call is fine as it was in original.
-            // Ideally use Web Worker, but that's a bigger refactor.
             const ucciMove = this.engine.findBestMove(64, 1000); // 1s thinking time
-
             this.thinkingMarker.setVisible(false);
 
             if (ucciMove === "nomove") {
@@ -306,9 +306,20 @@ export default class MainScene extends Phaser.Scene {
 
     public retract() {
         if (this.engine.getHistoryLength() > 1) {
+            // Always undo at least one move
             this.engine.undoInternalMove();
-            // If playing against computer, undo twice?
-            // For now, simple undo.
+
+            // If HvAI (moveMode != 2), try to undo a second move to get back to player's turn
+            // But only if there is enough history (history length > 1 means at least 1 move made, 
+            // but we just undid one. We need at least one more move to undo.)
+            // Actually getHistoryLength counts moves. Start is 0? No, mvList init with [0].
+            // So length 1 = start. Length 2 = 1 move made.
+            // If we undid one, length decreased by 1.
+            // If length > 1, we can undo again.
+            if (this.moveMode !== 2 && this.engine.getHistoryLength() > 1) {
+                this.engine.undoInternalMove();
+            }
+
             this.flushBoard();
             this.events.emit('update-score', this.engine.getScores());
             this.events.emit('update-moves', this.getMoveList());
@@ -352,7 +363,7 @@ export default class MainScene extends Phaser.Scene {
         return this.engine.getMoveList().map(m => {
             const ucci = this.engine.moveToString(m);
             // Format: a0i9 -> A0-I9
-            return ucci.slice(0, 2).toUpperCase() + '-' + ucci.slice(2, 4).toUpperCase();
+            return `${ucci.slice(0, 2).toUpperCase()} -${ucci.slice(2, 4).toUpperCase()} `;
         });
     }
 
@@ -475,7 +486,7 @@ export default class MainScene extends Phaser.Scene {
                 this.events.emit('update-score', this.engine.getScores());
                 this.events.emit('update-moves', this.getMoveList());
 
-            } catch (e) {
+            } catch (_e) {
                 // Fallback for legacy plain string FEN
                 if (this.engine.loadFen(savedData)) {
                     this.initialFen = savedData;

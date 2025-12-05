@@ -76,10 +76,10 @@ const UI: React.FC<UIProps> = ({ gameInstance }) => {
                 gridTemplateColumns: 'repeat(4, 1fr)',
                 gap: '8px'
             }}>
-                <button onClick={() => setIsSettingsOpen(true)} style={buttonStyle}>设置</button>
-                <button onClick={() => setIsRestartOpen(true)} style={buttonStyle}>重开</button>
-                <button onClick={() => getScene()?.retract()} style={buttonStyle}>悔棋</button>
-                <button onClick={() => getScene()?.recommend()} style={buttonStyle}>提示</button>
+                <button type='button' onClick={() => setIsSettingsOpen(true)} style={buttonStyle}>设置</button>
+                <button type='button' onClick={() => setIsRestartOpen(true)} style={buttonStyle}>重开</button>
+                <button type='button' onClick={() => getScene()?.retract()} style={buttonStyle}>悔棋</button>
+                <button type='button' onClick={() => getScene()?.recommend()} style={buttonStyle}>提示</button>
             </div>
 
             {/* Scores */}

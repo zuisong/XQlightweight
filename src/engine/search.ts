@@ -474,10 +474,10 @@ export class Search {
         this.mvResult = 0;
         this.allNodes = 0;
         this.pos.distance = 0;
-        const t = new Date().getTime();
+        const t = Date.now();
         for (let i = 1; i <= depth; i++) {
             const vl = this.searchRoot(i);
-            this.allMillis = new Date().getTime() - t;
+            this.allMillis = Date.now()- t;
             if (this.allMillis > millis) {
                 break;
             }

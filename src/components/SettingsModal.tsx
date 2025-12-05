@@ -11,8 +11,8 @@ interface SettingsModalProps {
 const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, scene }) => {
     const [difficulty, setDifficulty] = useState(2); // Default Hard
     const [soundEnabled, setSoundEnabled] = useState(true);
-    const [moveMode, setMoveMode] = useState(0);
-    const [handicap, setHandicap] = useState(0);
+    const [_moveMode, setMoveMode] = useState(0);
+    const [_handicap, setHandicap] = useState(0);
     const [animated, setAnimated] = useState(true);
 
     useEffect(() => {
@@ -29,7 +29,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, scene })
             else if (diff === 100) setDifficulty(1);
             else setDifficulty(2);
         }
-    }, [scene, isOpen]);
+    }, [scene]);
 
     const handleDifficultyChange = (level: number) => {
         setDifficulty(level);
@@ -73,7 +73,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, scene })
 
                 <div>
                     <label style={{ fontWeight: 'bold' }}>难度:</label>
-                    <button
+                    <button type='button'
                         onClick={() => {
                             const nextDifficulty = (difficulty + 1) % 3;
                             handleDifficultyChange(nextDifficulty);
@@ -137,7 +137,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, scene })
                 </div>
 
                 <div style={{ display: 'flex', justifyContent: 'center', marginTop: '10px' }}>
-                    <button onClick={onClose} style={{ padding: '10px 30px', cursor: 'pointer', backgroundColor: '#10B981', color: 'white', border: 'none', borderRadius: '5px', fontSize: '16px' }}>关闭</button>
+                    <button type='button' onClick={onClose} style={{ padding: '10px 30px', cursor: 'pointer', backgroundColor: '#10B981', color: 'white', border: 'none', borderRadius: '5px', fontSize: '16px' }}>关闭</button>
                 </div>
             </div>
         </div>

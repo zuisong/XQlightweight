@@ -17,8 +17,8 @@ export class UcciAdapter {
 
     async start(): Promise<void> {
         // Initial handshake
-        this.sendLine("id name " + this.engine.getId().name);
-        this.sendLine("id author " + this.engine.getId().author);
+        this.sendLine(`id name ${this.engine.getId().name}`);
+        this.sendLine(`id author ${this.engine.getId().author}`);
         this.sendLine("ucciok");
 
         const rl = readline.createInterface({
@@ -46,8 +46,8 @@ export class UcciAdapter {
 
         switch (cmd) {
             case "ucci":
-                this.sendLine("id name " + this.engine.getId().name);
-                this.sendLine("id author " + this.engine.getId().author);
+                this.sendLine(`id name ${this.engine.getId().name}`);
+                this.sendLine(`id author ${this.engine.getId().author}`);
                 this.sendLine("ucciok");
                 break;
             case "isready":

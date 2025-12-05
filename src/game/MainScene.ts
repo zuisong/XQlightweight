@@ -12,6 +12,7 @@ export default class MainScene extends Phaser.Scene {
     private selectionMarker!: Phaser.GameObjects.Image;
     private isFlipped: boolean = false;
     private thinkingMarker!: Phaser.GameObjects.DOMElement;
+    private validMoveMarkers: Phaser.GameObjects.Image[] = [];
     private busy: boolean = false;
 
     constructor() {
@@ -29,6 +30,18 @@ export default class MainScene extends Phaser.Scene {
 
         // Selection Marker (OOS)
         this.selectionMarker = this.add.image(0, 0, 'oos').setOrigin(0, 0).setVisible(false).setDepth(5);
+
+        // Generate Dot Texture
+        const graphics = this.make.graphics({ x: 0, y: 0 });
+        graphics.fillStyle(0x0000ff, 0.5);
+        graphics.fillCircle(16, 16, 8); // 32x32 texture, circle radius 8 centered at 16,16
+        graphics.generateTexture('dot', 32, 32);
+
+        // Valid Move Markers (Pool)
+        for (let i = 0; i < 32; i++) {
+            const marker = this.add.image(0, 0, 'dot').setOrigin(0.5).setVisible(false).setDepth(4);
+            this.validMoveMarkers.push(marker);
+        }
 
         // Initialize Pieces
         this.createPieces();
@@ -114,6 +127,9 @@ export default class MainScene extends Phaser.Scene {
     }
 
     updateSelection() {
+        // Hide all valid move markers
+        this.validMoveMarkers.forEach(m => m.setVisible(false));
+
         if (this.selectedSq === 0) {
             this.selectionMarker.setVisible(false);
             return;
@@ -129,6 +145,27 @@ export default class MainScene extends Phaser.Scene {
         if (piece) {
             this.selectionMarker.setPosition(piece.x, piece.y);
             this.selectionMarker.setVisible(true);
+
+            // Show valid moves
+            const moves = this.engine.getLegalMovesForPiece(this.selectedSq);
+            moves.forEach((mv, index) => {
+                if (index < this.validMoveMarkers.length) {
+                    const dst = DST(mv);
+                    const displayDst = this.isFlipped ? 254 - dst : dst;
+
+                    // Calculate position
+                    // TODO: Refactor coordinate calculation to a helper if used often
+                    // But for now, let's just use the same logic as Piece or handlePointerDown reverse
+
+                    const file = displayDst & 0xF;
+                    const rank = displayDst >> 4;
+
+                    const x = BOARD_OFFSET_X + (file - 3) * SQUARE_SIZE + SQUARE_SIZE / 2;
+                    const y = BOARD_OFFSET_Y + (rank - 3) * SQUARE_SIZE + SQUARE_SIZE / 2;
+
+                    this.validMoveMarkers[index].setPosition(x, y).setVisible(true);
+                }
+            });
         }
     }
 
@@ -225,9 +262,9 @@ export default class MainScene extends Phaser.Scene {
     checkGameState() {
         if (this.engine.isMate()) {
             const computerMove = this.computerMove();
-            this.playSound(computerMove ? "loss" : "win");
+            this.playSound(computerMove ? "win" : "loss");
             // Alert or UI update for game over
-            alert(computerMove ? "你输了！" : "你赢了！");
+            alert(computerMove ? "你赢了！" : "你输了！");
             this.busy = false;
             return;
         }

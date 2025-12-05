@@ -2,23 +2,23 @@
 import { ASC, DST, MOVE, Position, SRC } from "./position.ts";
 import { Search } from "./search.ts";
 
-export type PieceType = 
-|0
-|8
-|9
-|10
-|11
-|12
-|13
-|14
-|16
-|17
-|18
-|19
-|20
-|21
-|22
-;
+export type PieceType =
+    | 0
+    | 8
+    | 9
+    | 10
+    | 11
+    | 12
+    | 13
+    | 14
+    | 16
+    | 17
+    | 18
+    | 19
+    | 20
+    | 21
+    | 22
+    ;
 
 
 export class XiangQiEngine {
@@ -47,7 +47,7 @@ export class XiangQiEngine {
     }
 
     // UCCI move string to internal move number
-     ucciMoveToInternal(ucciMove: string): number {
+    ucciMoveToInternal(ucciMove: string): number {
         if (ucciMove.length !== 4) {
             return 0; // Invalid move format
         }
@@ -102,7 +102,7 @@ export class XiangQiEngine {
             console.error(`Illegal move: ${ucciMove}`);
             return false;
         }
-        
+
         const success = this._position.makeMove(internalMove);
         if (success) {
             this._search = new Search(this._position, 16);
@@ -192,6 +192,11 @@ export class XiangQiEngine {
 
     getMoveList(): number[] {
         return this._position.mvList;
+    }
+
+    getLegalMovesForPiece(sq: number): number[] {
+        const moves = this._position.generateMoves(null);
+        return moves.filter(mv => SRC(mv) === sq && this._position.legalMove(mv));
     }
 
     // Additional methods for UCCI protocol (already there)

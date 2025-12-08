@@ -11,7 +11,8 @@
     "@types/react": "^19.2.7",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react-swc": "^4.2.2",
-    "vite": "^7.2.6",
+    "happy-dom": "^20.0.11",
+    "vite": "7",
     "vitest": "^4.0.15"
   },
   "keywords": [],
@@ -19,7 +20,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "test": "vitest",
+    "test": "vitest run",
     "test:ui": "vitest --ui",
     "test:bun": "bun test",
     "check": "tsc --noEmit"

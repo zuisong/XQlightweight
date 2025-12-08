@@ -1,0 +1,18 @@
+<svg width="64" height="64" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+  <!-- 棋子外圆边距 -->
+  <circle cx="32" cy="32" r="30" fill="#f0d5b0" stroke="#8b4513" stroke-width="2" />
+  
+  <!-- 棋子内圆边框 -->
+  <circle cx="32" cy="32" r="24" fill="none" stroke="#d52c2c" stroke-width="1.5" stroke-dasharray="4 2" />
+  
+  <!-- 外围装饰环 -->
+  <circle cx="32" cy="32" r="27" fill="none" stroke="#8b4513" stroke-width="1" />
+
+  <!-- "帅"字 -->
+  <text x="50%" y="54%" font-family="'KaiTi', 'SimKai', 'STKaiti', serif" font-size="34" font-weight="bold" fill="#d52c2c" text-anchor="middle" dominant-baseline="middle">
+    帅
+  </text>
+  
+  <!-- 简单的光泽效果 -->
+  <path d="M12 18 Q 32 6, 52 18" stroke="rgba(255,255,255,0.6)" stroke-width="3" fill="none" />
+</svg>

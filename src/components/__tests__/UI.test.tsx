@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, waitFor, cleanup, act } from '@testing-library/react';
 import UI from '../UI';
+import { EVENTS } from '../../game/events';
 
 // Mock child components to isolate UI logic
 vi.mock('../SettingsModal', () => ({
@@ -95,7 +96,7 @@ describe('UI Component', () => {
 
             // Trigger score update
             const onCalls = mockScene.events.on.mock.calls;
-            const updateCallback = onCalls.find((call: any) => call[0] === 'update-score')?.[1];
+            const updateCallback = onCalls.find((call: any) => call[0] === EVENTS.UPDATE_SCORE)?.[1];
 
             if (updateCallback) {
                 // Wrap in act since it triggers a state update
@@ -153,19 +154,19 @@ describe('UI Component', () => {
     describe('事件监听', () => {
         it('应该监听 update-score 事件', () => {
             render(<UI gameInstance={mockGame} />);
-            expect(mockScene.events.on).toHaveBeenCalledWith('update-score', expect.any(Function));
+            expect(mockScene.events.on).toHaveBeenCalledWith(EVENTS.UPDATE_SCORE, expect.any(Function));
         });
 
         it('应该监听 update-settings 事件', () => {
             render(<UI gameInstance={mockGame} />);
-            expect(mockScene.events.on).toHaveBeenCalledWith('update-settings', expect.any(Function));
+            expect(mockScene.events.on).toHaveBeenCalledWith(EVENTS.UPDATE_SETTINGS, expect.any(Function));
         });
 
         it('组件卸载时应该移除事件监听', () => {
             const { unmount } = render(<UI gameInstance={mockGame} />);
             unmount();
-            expect(mockScene.events.off).toHaveBeenCalledWith('update-score', expect.any(Function));
-            expect(mockScene.events.off).toHaveBeenCalledWith('update-settings', expect.any(Function));
+            expect(mockScene.events.off).toHaveBeenCalledWith(EVENTS.UPDATE_SCORE, expect.any(Function));
+            expect(mockScene.events.off).toHaveBeenCalledWith(EVENTS.UPDATE_SETTINGS, expect.any(Function));
         });
     });
 
@@ -183,7 +184,5 @@ describe('UI Component', () => {
                 fireEvent.click(screen.getByText('提示'));
             }).not.toThrow();
         });
-
-        // Removed the complex toggle test as it relies on internal state of mocks which is harder to control here
     });
 });

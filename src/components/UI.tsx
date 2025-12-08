@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import type MainScene from '../game/MainScene';
 import RestartModal from './RestartModal';
 import SettingsModal from './SettingsModal';
+import { EVENTS } from '../game/events';
 
 interface UIProps {
     gameInstance: Phaser.Game | null;
@@ -36,16 +37,16 @@ const UI: React.FC<UIProps> = ({ gameInstance }) => {
             setShowScore(scene.showScore);
         };
 
-        scene.events.on('update-score', updateScores);
-        scene.events.on('update-settings', updateSettings);
+        scene.events.on(EVENTS.UPDATE_SCORE, updateScores);
+        scene.events.on(EVENTS.UPDATE_SETTINGS, updateSettings);
 
         // Initial fetch
         setScores(scene.getScores());
         setShowScore(scene.showScore);
 
         return () => {
-            scene.events.off('update-score', updateScores);
-            scene.events.off('update-settings', updateSettings);
+            scene.events.off(EVENTS.UPDATE_SCORE, updateScores);
+            scene.events.off(EVENTS.UPDATE_SETTINGS, updateSettings);
         };
     }, [scene]);
 

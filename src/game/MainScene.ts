@@ -9,6 +9,7 @@ import { GameStateManager, StorageManager, SoundManager } from '../core';
 import { Assets } from './Assets';
 import { CoordinateSystem } from './CoordinateSystem';
 import { Piece } from './Piece';
+import { EVENTS } from './events';
 
 export default class MainScene extends Phaser.Scene {
     private engine: XiangQiEngine;
@@ -39,8 +40,11 @@ export default class MainScene extends Phaser.Scene {
 
     create() {
         this.gameState.onStateChangeCallback(() => this.updateSelection());
-        this.gameState.onScoreUpdateCallback((scores) => this.events.emit('update-score', scores));
-        this.gameState.onMovesUpdateCallback((moves) => this.events.emit('update-moves', moves));
+        this.gameState.onScoreUpdateCallback((scores) => this.events.emit(EVENTS.UPDATE_SCORE, scores));
+        this.gameState.onMovesUpdateCallback((moves) => {
+            this.events.emit(EVENTS.UPDATE_MOVES, moves);
+            this.saveGame();
+        });
 
         // Add Board
         this.add.image(0, 0, 'board').setOrigin(0, 0);
@@ -76,7 +80,7 @@ export default class MainScene extends Phaser.Scene {
             .setVisible(false);
 
         // Input Handling
-        this.input.on('pointerdown', this.handlePointerDown, this);
+        this.input.on(Phaser.Input.Events.POINTER_DOWN, this.handlePointerDown, this);
 
         // Auto-load
         this.loadGame();
@@ -452,7 +456,7 @@ export default class MainScene extends Phaser.Scene {
     public setShowScore(show: boolean) {
         this.showScore = show;
         this.saveGame();
-        this.events.emit('update-settings');
+        this.events.emit(EVENTS.UPDATE_SETTINGS);
     }
 
     private initialFen: string = "";
@@ -520,8 +524,8 @@ export default class MainScene extends Phaser.Scene {
             this.createPieces();
             this.flushBoard();
             this.checkGameState();
-            this.events.emit('update-score', this.engine.getScores());
-            this.events.emit('update-moves', this.getMoveList());
+            this.events.emit(EVENTS.UPDATE_SCORE, this.engine.getScores());
+            this.events.emit(EVENTS.UPDATE_MOVES, this.getMoveList());
         } else {
             // No save, start fresh
             this.restart();

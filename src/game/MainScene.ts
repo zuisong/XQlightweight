@@ -376,6 +376,10 @@ export default class MainScene extends Phaser.Scene {
         // Don't recommend if game over
         if (this.engine.isMate() || this.engine.repStatus(3) > 0) return;
 
+        // Clear selection and valid move markers before executing the recommended move
+        this.selectedSq = 0;
+        this.updateSelection();
+
         this.thinkingMarker.setVisible(true);
         this.busy = true;
 

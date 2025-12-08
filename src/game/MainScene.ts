@@ -5,22 +5,32 @@ import { DST, IN_BOARD, SIDE_TAG, SRC } from '../engine/position';
 import type { Move, Square } from '../engine/types';
 import { createMove, unsafeSquare } from '../engine/types';
 import type { Handicap, MoveMode } from '../types/ui.types';
+import { GameStateManager, StorageManager, SoundManager } from '../core';
 import { Assets } from './Assets';
+import { CoordinateSystem } from './CoordinateSystem';
 import { Piece } from './Piece';
 
 export default class MainScene extends Phaser.Scene {
     private engine: XiangQiEngine;
+    private gameState!: GameStateManager;
+    private storageManager!: StorageManager;
+    private soundManager!: SoundManager;
     private pieces: Map<number, Piece> = new Map();
-    private selectedSq: Square = 0 as Square;
+    // selectedSq delegated to GameStateManager
     private selectionMarker!: Phaser.GameObjects.Image;
     private isFlipped: boolean = false;
     private thinkingMarker!: Phaser.GameObjects.DOMElement;
     private validMoveMarkers: Phaser.GameObjects.Image[] = [];
-    private busy: boolean = false;
+    // busy state delegated to GameStateManager
 
     constructor() {
         super('MainScene');
         this.engine = new XiangQiEngine();
+
+        // Initialize Managers early to allow external access (e.g. from React)
+        this.storageManager = new StorageManager();
+        this.soundManager = new SoundManager(this, true);
+        this.gameState = new GameStateManager(this.engine);
     }
 
     preload() {
@@ -28,6 +38,10 @@ export default class MainScene extends Phaser.Scene {
     }
 
     create() {
+        this.gameState.onStateChangeCallback(() => this.updateSelection());
+        this.gameState.onScoreUpdateCallback((scores) => this.events.emit('update-score', scores));
+        this.gameState.onMovesUpdateCallback((moves) => this.events.emit('update-moves', moves));
+
         // Add Board
         this.add.image(0, 0, 'board').setOrigin(0, 0);
 
@@ -87,45 +101,27 @@ export default class MainScene extends Phaser.Scene {
     }
 
     handlePointerDown(pointer: Phaser.Input.Pointer) {
-        if (this.busy) return;
+        if (this.gameState.isBusy) return;
 
-        // Convert x,y to square
-        // x = BOARD_OFFSET_X + (file - 3) * SQUARE_SIZE
-        // => file - 3 = (x - BOARD_OFFSET_X) / SQUARE_SIZE
-        // => file = Math.floor(...) + 3
-
-        const col = Math.floor((pointer.x - BOARD_OFFSET_X) / SQUARE_SIZE);
-        const row = Math.floor((pointer.y - BOARD_OFFSET_Y) / SQUARE_SIZE);
-
-        const file = col + 3;
-        const rank = row + 3;
-
-        if (file < 3 || file > 11 || rank < 3 || rank > 12) return;
-
-        let sq = (rank << 4) + file;
-
-        // Handle Flip
-        if (this.isFlipped) {
-            sq = 254 - sq;
+        const sq = CoordinateSystem.getSquareAt(pointer.x, pointer.y, this.isFlipped);
+        if (sq !== null) {
+            this.clickSquare(unsafeSquare(sq));
         }
-
-        if (!IN_BOARD(sq)) return;
-
-        this.clickSquare(unsafeSquare(sq));
     }
 
     clickSquare(sq: Square) {
-        const pc = this.engine.getPiece(sq);
-        const selfSide = SIDE_TAG(this.engine.sdPlayer);
+        // Try to select piece
+        if (this.gameState.selectPiece(sq)) {
+            this.soundManager.playClick();
+            return;
+        }
 
-        if ((pc & selfSide) !== 0) {
-            // Clicked own piece -> Select
-            this.playSound('click');
-            this.selectedSq = sq;
-            this.updateSelection();
-        } else if ((this.selectedSq as number) > 0) {
-            // Clicked other square -> Try Move
-            this.makeMove(this.selectedSq, sq);
+        // Try to move
+        const move = this.gameState.tryMove(sq);
+        if (move) {
+            const src = SRC(move);
+            const dst = DST(move);
+            this.makeMove(unsafeSquare(src), unsafeSquare(dst));
         }
     }
 
@@ -133,40 +129,31 @@ export default class MainScene extends Phaser.Scene {
         // Hide all valid move markers
         this.validMoveMarkers.forEach(m => m.setVisible(false));
 
-        if ((this.selectedSq as number) === 0) {
+        const selectedSq = this.gameState.selectedSquare;
+
+        if ((selectedSq as number) === 0) {
             this.selectionMarker.setVisible(false);
             return;
         }
 
-        const _displaySq = this.isFlipped ? 254 - (this.selectedSq as number) : this.selectedSq;
+        const displaySq = this.isFlipped ? 254 - (selectedSq as number) : selectedSq;
         // Re-use logic from Piece or just calculate
         // We can just ask the piece at that square for its position?
         // But the piece might be hidden (if we selected an empty square? No, we only select own pieces).
         // Wait, we only select own pieces.
 
-        const piece = this.pieces.get(this.selectedSq as number);
+        const piece = this.pieces.get(selectedSq as number);
         if (piece) {
             this.selectionMarker.setPosition(piece.x, piece.y);
             this.selectionMarker.setVisible(true);
 
             // Show valid moves
-            const moves = this.engine.getLegalMovesForPiece(this.selectedSq);
+            const moves = this.gameState.getLegalMoves(selectedSq);
             moves.forEach((mv, index) => {
                 if (index < this.validMoveMarkers.length) {
                     const dst = DST(mv as number);
-                    const displayDst = this.isFlipped ? 254 - dst : dst;
-
-                    // Calculate position
-                    // TODO: Refactor coordinate calculation to a helper if used often
-                    // But for now, let's just use the same logic as Piece or handlePointerDown reverse
-
-                    const file = displayDst & 0xF;
-                    const rank = displayDst >> 4;
-
-                    const x = BOARD_OFFSET_X + (file - 3) * SQUARE_SIZE + SQUARE_SIZE / 2;
-                    const y = BOARD_OFFSET_Y + (rank - 3) * SQUARE_SIZE + SQUARE_SIZE / 2;
-
-                    this.validMoveMarkers[index].setPosition(x, y).setVisible(true);
+                    const pos = CoordinateSystem.getScreenPosition(dst, this.isFlipped, true);
+                    this.validMoveMarkers[index].setPosition(pos.x, pos.y).setVisible(true);
                 }
             });
         }
@@ -176,27 +163,25 @@ export default class MainScene extends Phaser.Scene {
         const mv = createMove(src, dst);
 
         if (!this.engine.legalMove(mv)) {
-            this.selectedSq = 0 as Square;
-            this.updateSelection();
+            this.gameState.clearSelection();
             return;
         }
 
         if (!this.engine.makeInternalMove(mv)) {
-            this.playSound('illegal');
+            this.soundManager.playIllegal();
             return;
         }
 
         // Move successful in engine. Animate it.
-        this.busy = true;
+        this.gameState.setBusy(true);
         await this.animateMove(src as number, dst as number);
 
         // Update Board State (Sync all pieces)
         this.flushBoard();
 
-        this.playSound('move'); // Simplified sound logic for now
+        this.soundManager.playMove(); // Simplified sound logic for now
 
-        this.selectedSq = 0 as Square;
-        this.updateSelection();
+        this.gameState.clearSelection();
 
         // Check Game Over / Response
         this.checkGameState();
@@ -266,10 +251,10 @@ export default class MainScene extends Phaser.Scene {
     checkGameState() {
         if (this.engine.isMate()) {
             const computerMove = this.computerMove();
-            this.playSound(computerMove ? "win" : "loss");
+            computerMove ? this.soundManager.playWin() : this.soundManager.playLoss();
             // Alert or UI update for game over
             alert(computerMove ? "你赢了！" : "你输了！");
-            this.busy = false;
+            this.gameState.setBusy(false);
             return;
         }
 
@@ -278,25 +263,25 @@ export default class MainScene extends Phaser.Scene {
             vlRep = this.engine.repValue(vlRep);
             const WIN_VALUE_THRESHOLD = 9000;
             if (vlRep > -WIN_VALUE_THRESHOLD && vlRep < WIN_VALUE_THRESHOLD) {
-                this.playSound("draw");
+                this.soundManager.playDraw();
                 alert("双方不变作和");
             } else if (this.computerMove() === (vlRep < 0)) {
-                this.playSound("loss");
+                this.soundManager.playLoss();
                 alert("长打作负");
             } else {
-                this.playSound("win");
+                this.soundManager.playWin();
                 alert("长打作负"); // Opponent loses
             }
-            this.busy = false;
+            this.gameState.setBusy(false);
             return;
         }
 
         if (this.engine.inCheck()) {
-            this.playSound(this.computerMove() ? "check2" : "check");
+            this.computerMove() ? this.soundManager.playCheck2() : this.soundManager.playCheck();
         } else if (this.engine.captured()) {
-            this.playSound(this.computerMove() ? "capture2" : "capture");
+            this.computerMove() ? this.soundManager.playCapture2() : this.soundManager.playCapture();
         } else {
-            this.playSound(this.computerMove() ? "move2" : "move");
+            this.computerMove() ? this.soundManager.playMove2() : this.soundManager.playMove();
         }
 
         this.events.emit('update-score', this.engine.getScores());
@@ -309,12 +294,12 @@ export default class MainScene extends Phaser.Scene {
 
     response() {
         if (!this.computerMove()) {
-            this.busy = false;
+            this.gameState.setBusy(false);
             return;
         }
 
         this.thinkingMarker.setVisible(true);
-        this.busy = true;
+        this.gameState.setBusy(true);
 
         // Use setTimeout to allow UI to update and show thinking marker
         setTimeout(() => {
@@ -322,7 +307,7 @@ export default class MainScene extends Phaser.Scene {
             this.thinkingMarker.setVisible(false);
 
             if (ucciMove === "nomove") {
-                this.busy = false;
+                this.gameState.setBusy(false);
                 return;
             }
 
@@ -335,7 +320,7 @@ export default class MainScene extends Phaser.Scene {
         if (!this.engine.legalMove(mv)) return;
         if (!this.engine.makeInternalMove(mv)) return;
 
-        this.busy = true;
+        this.gameState.setBusy(true);
         await this.animateMove(SRC(mv as number), DST(mv as number));
         this.flushBoard();
         this.checkGameState();
@@ -375,22 +360,21 @@ export default class MainScene extends Phaser.Scene {
     }
 
     public recommend() {
-        if (this.busy) return;
+        if (this.gameState.isBusy) return;
 
         // Don't recommend if game over
         if (this.engine.isMate() || this.engine.repStatus(3) > 0) return;
 
         // Clear selection and valid move markers before executing the recommended move
-        this.selectedSq = 0 as Square;
-        this.updateSelection();
+        this.gameState.clearSelection();
 
         this.thinkingMarker.setVisible(true);
-        this.busy = true;
+        this.gameState.setBusy(true);
 
         setTimeout(() => {
             const ucciMove = this.engine.findBestMove(64, 1000); // 1s thinking time
             this.thinkingMarker.setVisible(false);
-            this.busy = false;
+            this.gameState.setBusy(false);
 
             if (ucciMove !== "nomove") {
                 const internalMove = this.engine.ucciMoveToInternal(ucciMove);
@@ -412,19 +396,23 @@ export default class MainScene extends Phaser.Scene {
         });
     }
 
-    playSound(key: string) {
-        if (this.soundEnabled) {
-            this.sound.play(key);
-        }
-    }
+
 
     // --- Settings & State ---
-    public soundEnabled: boolean = true;
-    public difficulty: number = 100; // millis (Default: Amateur)
-    public moveMode: MoveMode = 0; // 0: User first, 1: Computer first, 2: No Computer
-    public handicap: Handicap = 0; // 0: None, 1: Left Knight, 2: Double Knights, 3: Nine Pieces
+    // Delegated to GameStateManager
+
+    get difficulty(): number { return this.gameState.difficulty; }
+    set difficulty(val: number) { this.gameState.setDifficultyMillis(val); }
+
+    get moveMode(): MoveMode { return this.gameState.moveMode; }
+    set moveMode(val: MoveMode) { this.gameState.setMoveMode(val); }
+
+    get handicap(): Handicap { return this.gameState.handicap; }
+    set handicap(val: Handicap) { this.gameState.setHandicap(val); }
+
     public showScore: boolean = true;
 
+    // STARTUP_FEN remains here for now as UI configuration
     private readonly STARTUP_FEN = [
         "rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C5C1/9/RNBAKABNR w - - 0 1", // No Handicap
         "rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C5C1/9/R1BAKABNR w - - 0 1", // Left Knight
@@ -433,25 +421,33 @@ export default class MainScene extends Phaser.Scene {
     ];
 
     public setSound(enabled: boolean) {
-        this.soundEnabled = enabled;
+        this.soundManager.setEnabled(enabled);
         this.saveGame();
     }
 
     public setDifficulty(level: number) {
         // level: 0=Easy(10ms), 1=Normal(100ms), 2=Hard(1000ms)
-        this.difficulty = 10 ** (level + 1);
+        this.gameState.setDifficulty(level);
         this.saveGame();
     }
 
     public setMoveMode(mode: MoveMode) {
-        this.moveMode = mode;
+        this.gameState.setMoveMode(mode);
         this.saveGame();
     }
 
     public setHandicap(handicap: Handicap) {
-        this.handicap = handicap;
+        this.gameState.setHandicap(handicap);
         this.saveGame();
     }
+
+    // --- Added for SettingsModal compatibility ---
+
+    get soundEnabled(): boolean {
+        return this.soundManager.isEnabled();
+    }
+
+
 
     public setShowScore(show: boolean) {
         this.showScore = show;
@@ -462,7 +458,8 @@ export default class MainScene extends Phaser.Scene {
     private initialFen: string = "";
 
     public restart() {
-        this.engine = new XiangQiEngine(); // Reset engine
+        // this.engine = new XiangQiEngine(); // Do NOT create new engine, it breaks GameStateManager reference
+        // Just load FEN to reset state
 
         // Apply Handicap
         const fen = this.STARTUP_FEN[this.handicap] || this.STARTUP_FEN[0];
@@ -470,9 +467,8 @@ export default class MainScene extends Phaser.Scene {
         this.engine.loadFen(fen);
 
         this.createPieces(); // Reset pieces
-        this.selectedSq = 0 as Square;
-        this.updateSelection();
-        this.busy = false;
+        this.gameState.clearSelection();
+        this.gameState.setBusy(false);
 
         // Handle Move Mode (Computer First)
         if (this.moveMode === 1) {
@@ -495,53 +491,37 @@ export default class MainScene extends Phaser.Scene {
     }
 
     public loadGame() {
-        const savedData = localStorage.getItem('xqlightweight_game_state');
-        if (savedData) {
-            try {
-                // Try parsing as JSON
-                const gameState = JSON.parse(savedData);
+        const gameState = this.storageManager.load();
+        if (gameState) {
+            // Restore settings
+            if (gameState.handicap !== undefined) this.handicap = gameState.handicap;
+            if (gameState.moveMode !== undefined) this.moveMode = gameState.moveMode;
+            if (gameState.difficulty !== undefined) this.difficulty = gameState.difficulty;
+            if (gameState.soundEnabled !== undefined) this.soundManager.setEnabled(gameState.soundEnabled);
+            if (gameState.animated !== undefined) this.animated = gameState.animated;
+            if (gameState.showScore !== undefined) this.showScore = gameState.showScore;
 
-                // Restore settings
-                if (gameState.handicap !== undefined) this.handicap = gameState.handicap;
-                if (gameState.moveMode !== undefined) this.moveMode = gameState.moveMode;
-                if (gameState.difficulty !== undefined) this.difficulty = gameState.difficulty;
-                if (gameState.soundEnabled !== undefined) this.soundEnabled = gameState.soundEnabled;
-                if (gameState.animated !== undefined) this.animated = gameState.animated;
-                if (gameState.showScore !== undefined) this.showScore = gameState.showScore;
+            // Restore Game
+            if (gameState.initialFen && gameState.moves) {
+                this.initialFen = gameState.initialFen;
+                this.engine.loadFen(this.initialFen);
 
-                // Restore Game
-                if (gameState.initialFen && gameState.moves) {
-                    this.initialFen = gameState.initialFen;
-                    this.engine.loadFen(this.initialFen);
-
-                    // Replay moves
-                    for (const ucci of gameState.moves) {
-                        const mv = this.engine.ucciMoveToInternal(ucci);
-                        this.engine.makeInternalMove(mv);
-                    }
-                } else if (gameState.fen) {
-                    // Legacy or simple FEN
-                    this.engine.loadFen(gameState.fen);
-                    this.initialFen = gameState.fen; // Assume current is initial if no history
+                // Replay moves
+                for (const ucci of gameState.moves) {
+                    const mv = this.engine.ucciMoveToInternal(ucci);
+                    this.engine.makeInternalMove(mv);
                 }
-
-                this.createPieces();
-                this.flushBoard();
-                this.checkGameState();
-                this.events.emit('update-score', this.engine.getScores());
-                this.events.emit('update-moves', this.getMoveList());
-
-            } catch (_e) {
-                // Fallback for legacy plain string FEN
-                if (this.engine.loadFen(savedData)) {
-                    this.initialFen = savedData;
-                    this.createPieces();
-                    this.flushBoard();
-                    this.checkGameState();
-                    this.events.emit('update-score', this.engine.getScores());
-                    this.events.emit('update-moves', this.getMoveList());
-                }
+            } else if (gameState.fen) {
+                // Legacy or simple FEN
+                this.engine.loadFen(gameState.fen);
+                this.initialFen = gameState.fen; // Assume current is initial if no history
             }
+
+            this.createPieces();
+            this.flushBoard();
+            this.checkGameState();
+            this.events.emit('update-score', this.engine.getScores());
+            this.events.emit('update-moves', this.getMoveList());
         } else {
             // No save, start fresh
             this.restart();
@@ -560,10 +540,10 @@ export default class MainScene extends Phaser.Scene {
             handicap: this.handicap,
             moveMode: this.moveMode,
             difficulty: this.difficulty,
-            soundEnabled: this.soundEnabled,
+            soundEnabled: this.soundManager.isEnabled(),
             animated: this.animated,
             showScore: this.showScore
         };
-        localStorage.setItem('xqlightweight_game_state', JSON.stringify(gameState));
+        this.storageManager.save(gameState);
     }
 }

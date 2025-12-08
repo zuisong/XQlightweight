@@ -15,15 +15,17 @@ const UI: React.FC<UIProps> = ({ gameInstance }) => {
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
     const [isRestartOpen, setIsRestartOpen] = useState(false);
     const [showScore, setShowScore] = useState(true);
+    const [scene, setScene] = useState<MainScene | null>(null);
 
-    const getScene = () => {
-        return gameInstance?.scene.getScene('MainScene') as MainScene;
-    };
+    // Cache scene instance
+    useEffect(() => {
+        if (gameInstance) {
+            const mainScene = gameInstance.scene.getScene('MainScene') as MainScene;
+            setScene(mainScene);
+        }
+    }, [gameInstance]);
 
     useEffect(() => {
-        if (!gameInstance) return;
-
-        const scene = getScene();
         if (!scene) return;
 
         const updateScores = (newScores: { red: number, black: number }) => {
@@ -45,7 +47,7 @@ const UI: React.FC<UIProps> = ({ gameInstance }) => {
             scene.events.off('update-score', updateScores);
             scene.events.off('update-settings', updateSettings);
         };
-    }, [gameInstance, getScene]);
+    }, [scene]);
 
     return (
         <div style={{
@@ -61,12 +63,12 @@ const UI: React.FC<UIProps> = ({ gameInstance }) => {
             <SettingsModal
                 isOpen={isSettingsOpen}
                 onClose={() => setIsSettingsOpen(false)}
-                scene={getScene() || null}
+                scene={scene}
             />
             <RestartModal
                 isOpen={isRestartOpen}
                 onClose={() => setIsRestartOpen(false)}
-                scene={getScene() || null}
+                scene={scene}
             />
 
             {/* Control Buttons - Grid Layout */}
@@ -78,8 +80,8 @@ const UI: React.FC<UIProps> = ({ gameInstance }) => {
             }}>
                 <button type='button' onClick={() => setIsSettingsOpen(true)} style={buttonStyle}>设置</button>
                 <button type='button' onClick={() => setIsRestartOpen(true)} style={buttonStyle}>重开</button>
-                <button type='button' onClick={() => getScene()?.retract()} style={buttonStyle}>悔棋</button>
-                <button type='button' onClick={() => getScene()?.recommend()} style={buttonStyle}>提示</button>
+                <button type='button' onClick={() => scene?.retract()} style={buttonStyle}>悔棋</button>
+                <button type='button' onClick={() => scene?.recommend()} style={buttonStyle}>提示</button>
             </div>
 
             {/* Scores */}

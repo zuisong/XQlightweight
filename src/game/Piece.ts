@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
-import { BOARD_OFFSET_X, BOARD_OFFSET_Y, PIECE_IMAGE_MAP, SQUARE_SIZE } from '../constants';
-import { FILE_X, RANK_Y } from '../engine/position';
+import { PIECE_IMAGE_MAP } from '../constants';
 import type { PieceType } from '../engine/types';
+import { CoordinateSystem } from './CoordinateSystem';
 
 export class Piece extends Phaser.GameObjects.Sprite {
     public sq: number;
@@ -14,10 +14,7 @@ export class Piece extends Phaser.GameObjects.Sprite {
         this.pieceType = pieceType;
         this._flipped = flipped;
 
-        this.setOrigin(0, 0); // Top-left anchor to match Excalibur logic if needed, or Center?
-        // Excalibur was Top-Left (Anchor Vector.Zero). Phaser default is Center (0.5).
-        // Let's stick to Top-Left to match the coordinate calculation logic from Excalibur code
-        // "this.pos.x = BOARD_OFFSET_X + (file - 3) * SQUARE_SIZE;"
+        this.setOrigin(0, 0);
 
         this.updatePosition();
 
@@ -25,15 +22,9 @@ export class Piece extends Phaser.GameObjects.Sprite {
     }
 
     updatePosition() {
-        const displaySq = this._flipped ? 254 - this.sq : this.sq;
-        const file = FILE_X(displaySq);
-        const rank = RANK_Y(displaySq);
-
-        // Convert board coordinates to screen coordinates
-        // Engine coordinates: file 3-11, rank 3-12
-        // Screen coordinates offset: file-3, rank-3
-        this.x = BOARD_OFFSET_X + (file - 3) * SQUARE_SIZE;
-        this.y = BOARD_OFFSET_Y + (rank - 3) * SQUARE_SIZE;
+        const pos = CoordinateSystem.getScreenPosition(this.sq, this._flipped, false);
+        this.x = pos.x;
+        this.y = pos.y;
     }
 
     setPiece(type: PieceType) {

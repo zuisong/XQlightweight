@@ -1,4 +1,5 @@
-import { describe, it, expect, beforeEach } from 'bun:test';
+
+import { describe, it, expect } from 'vitest';
 import { CoordinateSystem } from '../CoordinateSystem';
 import { BOARD_OFFSET_X, BOARD_OFFSET_Y, SQUARE_SIZE } from '../../constants';
 

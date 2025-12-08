@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'bun:test';
+import { describe, it, expect } from 'vitest';
 import { XiangQiEngine } from '../index';
 import { createSquare, createMove, unsafeSquare } from '../types';
 import {

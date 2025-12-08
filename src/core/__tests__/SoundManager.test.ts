@@ -1,11 +1,11 @@
-import { describe, it, expect, beforeEach, mock } from 'bun:test';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { SoundManager } from '../SoundManager';
 
 // Mock Phaser Scene
 class MockScene {
     public sound = {
-        play: mock((key: string) => { }),
-        add: mock((key: string) => ({ play: mock(() => { }) }))
+        play: vi.fn((key: string) => { }),
+        add: vi.fn((key: string) => ({ play: vi.fn(() => { }) }))
     };
 }
 

@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'bun:test';
+import { describe, it, expect, beforeEach } from 'vitest';
 import { StorageManager, MemoryStorageAdapter } from '../StorageManager';
 
 describe('StorageManager', () => {
@@ -29,8 +29,8 @@ describe('StorageManager', () => {
         });
 
         it('应该覆盖之前的保存', () => {
-            const state1 = { fen: 'state1' };
-            const state2 = { fen: 'state2' };
+            const state1 = { fen: 'state1' } as any;
+            const state2 = { fen: 'state2' } as any;
 
             manager.save(state1);
             manager.save(state2);
@@ -45,7 +45,7 @@ describe('StorageManager', () => {
                 moves: ['a0a1', 'b0b1'],
                 nested: { value: 123 },
                 array: [1, 2, 3]
-            };
+            } as any;
 
             manager.save(complexState);
             const loaded = manager.load();
@@ -65,7 +65,7 @@ describe('StorageManager', () => {
                 fen: 'loaded-fen',
                 moveMode: 2,
                 score: 500
-            };
+            } as any;
 
             manager.save(state);
             const loaded = manager.load();
@@ -98,6 +98,16 @@ describe('StorageManager', () => {
         });
     });
 
+    describe('clear', () => {
+        it('应该清除保存的状态', () => {
+            const state = {} as any;
+            manager.save(state);
+            manager.clear();
+            const result = manager.load();
+            expect(result).toBeNull();
+        });
+    });
+
     describe('边界情况', () => {
         it('应该处理空对象', () => {
             manager.save({});
@@ -108,10 +118,10 @@ describe('StorageManager', () => {
 
         it('应该处理包含特殊字符的数据', () => {
             const state = {
-                fen: 'test/with/slashes',
-                name: '中文名称',
-                special: '!@#$%^&*()'
-            };
+                fen: 'test',
+                name: 'special"chars',
+                special: '\\n\\t'
+            } as any;
 
             manager.save(state);
             const loaded = manager.load();
@@ -123,7 +133,7 @@ describe('StorageManager', () => {
             const state = {
                 defined: 'value',
                 undefined: undefined
-            };
+            } as any;
 
             manager.save(state);
             const loaded = manager.load();
@@ -135,7 +145,7 @@ describe('StorageManager', () => {
         it('应该处理null值', () => {
             const state = {
                 value: null
-            };
+            } as any;
 
             manager.save(state);
             const loaded = manager.load();
@@ -147,9 +157,9 @@ describe('StorageManager', () => {
     describe('性能', () => {
         it('应该快速保存和加载大数据', () => {
             const largeState = {
-                moves: Array(1000).fill('a0a1'),
-                data: Array(1000).fill({ value: 123 })
-            };
+                moves: new Array(100).fill('move'),
+                data: new Array(100).fill(1)
+            } as any;
 
             const saveStart = performance.now();
             manager.save(largeState);

@@ -21,7 +21,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 */
 
 import { BOOK_DAT } from "./book.ts";
-import type { PieceType } from "./index.ts";
+import type { PieceType } from "./types";
 
 
 
@@ -607,22 +607,22 @@ export class Position {
 
             if (bDel) {
                 // Remove piece at sq
-                let found = false;
+                let _found = false;
                 for (let i = startIndex; i <= endIndex; i++) {
                     if (this.pieceList[side][i] === sq) {
                         this.pieceList[side][i] = 0;
-                        found = true;
+                        _found = true;
                         break;
                     }
                 }
                 // if (!found) console.warn(`Failed to remove piece ${pc} at ${sq} from side ${side}`);
             } else {
                 // Add piece at sq
-                let found = false;
+                let _found = false;
                 for (let i = startIndex; i <= endIndex; i++) {
                     if (this.pieceList[side][i] === 0) {
                         this.pieceList[side][i] = sq;
-                        found = true;
+                        _found = true;
                         break;
                     }
                 }
@@ -966,7 +966,7 @@ export class Position {
                         }
                     }
                     break;
-                case PIECE_PAWN:
+                case PIECE_PAWN: {
                     var sqDst = sqSrc + (this.sdPlayer === 0 ? -16 : 16);
                     if (IN_BOARD(sqDst)) {
                         var pcDst = this.squares[sqDst];
@@ -996,6 +996,7 @@ export class Position {
                         }
                     }
                     break;
+                }
             }
         }
         return mvs;

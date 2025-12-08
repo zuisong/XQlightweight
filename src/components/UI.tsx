@@ -45,7 +45,7 @@ const UI: React.FC<UIProps> = ({ gameInstance }) => {
             scene.events.off('update-score', updateScores);
             scene.events.off('update-settings', updateSettings);
         };
-    }, [gameInstance]);
+    }, [gameInstance, getScene]);
 
     return (
         <div style={{

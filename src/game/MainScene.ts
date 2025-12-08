@@ -1,14 +1,17 @@
 import Phaser from 'phaser';
 import { BOARD_HEIGHT, BOARD_OFFSET_X, BOARD_OFFSET_Y, BOARD_WIDTH, SQUARE_SIZE } from '../constants';
 import { XiangQiEngine } from '../engine/index';
-import { DST, IN_BOARD, MOVE, SIDE_TAG, SRC } from '../engine/position';
+import { DST, IN_BOARD, SIDE_TAG, SRC } from '../engine/position';
+import type { Move, Square } from '../engine/types';
+import { createMove, unsafeSquare } from '../engine/types';
+import type { Handicap, MoveMode } from '../types/ui.types';
 import { Assets } from './Assets';
 import { Piece } from './Piece';
 
 export default class MainScene extends Phaser.Scene {
     private engine: XiangQiEngine;
     private pieces: Map<number, Piece> = new Map();
-    private selectedSq: number = 0;
+    private selectedSq: Square = 0 as Square;
     private selectionMarker!: Phaser.GameObjects.Image;
     private isFlipped: boolean = false;
     private thinkingMarker!: Phaser.GameObjects.DOMElement;
@@ -72,7 +75,7 @@ export default class MainScene extends Phaser.Scene {
 
         for (let i = 0; i < 256; i++) {
             if (IN_BOARD(i)) {
-                const pieceType = this.engine.getPiece(i);
+                const pieceType = this.engine.getPiece(unsafeSquare(i));
                 // Only create sprite if there is a piece? 
                 // Excalibur created actors for ALL squares and just hid them/changed type.
                 // Let's follow that pattern for simplicity of updates.
@@ -108,10 +111,10 @@ export default class MainScene extends Phaser.Scene {
 
         if (!IN_BOARD(sq)) return;
 
-        this.clickSquare(sq);
+        this.clickSquare(unsafeSquare(sq));
     }
 
-    clickSquare(sq: number) {
+    clickSquare(sq: Square) {
         const pc = this.engine.getPiece(sq);
         const selfSide = SIDE_TAG(this.engine.sdPlayer);
 
@@ -120,7 +123,7 @@ export default class MainScene extends Phaser.Scene {
             this.playSound('click');
             this.selectedSq = sq;
             this.updateSelection();
-        } else if (this.selectedSq > 0) {
+        } else if ((this.selectedSq as number) > 0) {
             // Clicked other square -> Try Move
             this.makeMove(this.selectedSq, sq);
         }
@@ -130,18 +133,18 @@ export default class MainScene extends Phaser.Scene {
         // Hide all valid move markers
         this.validMoveMarkers.forEach(m => m.setVisible(false));
 
-        if (this.selectedSq === 0) {
+        if ((this.selectedSq as number) === 0) {
             this.selectionMarker.setVisible(false);
             return;
         }
 
-        const _displaySq = this.isFlipped ? 254 - this.selectedSq : this.selectedSq;
+        const _displaySq = this.isFlipped ? 254 - (this.selectedSq as number) : this.selectedSq;
         // Re-use logic from Piece or just calculate
         // We can just ask the piece at that square for its position?
         // But the piece might be hidden (if we selected an empty square? No, we only select own pieces).
         // Wait, we only select own pieces.
 
-        const piece = this.pieces.get(this.selectedSq);
+        const piece = this.pieces.get(this.selectedSq as number);
         if (piece) {
             this.selectionMarker.setPosition(piece.x, piece.y);
             this.selectionMarker.setVisible(true);
@@ -150,7 +153,7 @@ export default class MainScene extends Phaser.Scene {
             const moves = this.engine.getLegalMovesForPiece(this.selectedSq);
             moves.forEach((mv, index) => {
                 if (index < this.validMoveMarkers.length) {
-                    const dst = DST(mv);
+                    const dst = DST(mv as number);
                     const displayDst = this.isFlipped ? 254 - dst : dst;
 
                     // Calculate position
@@ -169,10 +172,11 @@ export default class MainScene extends Phaser.Scene {
         }
     }
 
-    async makeMove(src: number, dst: number) {
-        const mv = MOVE(src, dst);
+    async makeMove(src: Square, dst: Square) {
+        const mv = createMove(src, dst);
+
         if (!this.engine.legalMove(mv)) {
-            this.selectedSq = 0;
+            this.selectedSq = 0 as Square;
             this.updateSelection();
             return;
         }
@@ -184,14 +188,14 @@ export default class MainScene extends Phaser.Scene {
 
         // Move successful in engine. Animate it.
         this.busy = true;
-        await this.animateMove(src, dst);
+        await this.animateMove(src as number, dst as number);
 
         // Update Board State (Sync all pieces)
         this.flushBoard();
 
         this.playSound('move'); // Simplified sound logic for now
 
-        this.selectedSq = 0;
+        this.selectedSq = 0 as Square;
         this.updateSelection();
 
         // Check Game Over / Response
@@ -239,7 +243,7 @@ export default class MainScene extends Phaser.Scene {
         // Sync all sprites with engine state
         for (let i = 0; i < 256; i++) {
             if (IN_BOARD(i)) {
-                const pc = this.engine.getPiece(i);
+                const pc = this.engine.getPiece(unsafeSquare(i));
                 const sprite = this.pieces.get(i);
                 if (sprite) {
                     sprite.setPiece(pc);
@@ -327,12 +331,12 @@ export default class MainScene extends Phaser.Scene {
         }, 250);
     }
 
-    async addMove(mv: number) {
+    async addMove(mv: Move) {
         if (!this.engine.legalMove(mv)) return;
         if (!this.engine.makeInternalMove(mv)) return;
 
         this.busy = true;
-        await this.animateMove(SRC(mv), DST(mv));
+        await this.animateMove(SRC(mv as number), DST(mv as number));
         this.flushBoard();
         this.checkGameState();
     }
@@ -377,7 +381,7 @@ export default class MainScene extends Phaser.Scene {
         if (this.engine.isMate() || this.engine.repStatus(3) > 0) return;
 
         // Clear selection and valid move markers before executing the recommended move
-        this.selectedSq = 0;
+        this.selectedSq = 0 as Square;
         this.updateSelection();
 
         this.thinkingMarker.setVisible(true);
@@ -417,8 +421,8 @@ export default class MainScene extends Phaser.Scene {
     // --- Settings & State ---
     public soundEnabled: boolean = true;
     public difficulty: number = 100; // millis (Default: Amateur)
-    public moveMode: number = 0; // 0: User first, 1: Computer first, 2: No Computer
-    public handicap: number = 0; // 0: None, 1: Left Knight, 2: Double Knights, 3: Nine Pieces
+    public moveMode: MoveMode = 0; // 0: User first, 1: Computer first, 2: No Computer
+    public handicap: Handicap = 0; // 0: None, 1: Left Knight, 2: Double Knights, 3: Nine Pieces
     public showScore: boolean = true;
 
     private readonly STARTUP_FEN = [
@@ -439,12 +443,12 @@ export default class MainScene extends Phaser.Scene {
         this.saveGame();
     }
 
-    public setMoveMode(mode: number) {
+    public setMoveMode(mode: MoveMode) {
         this.moveMode = mode;
         this.saveGame();
     }
 
-    public setHandicap(handicap: number) {
+    public setHandicap(handicap: Handicap) {
         this.handicap = handicap;
         this.saveGame();
     }
@@ -466,7 +470,7 @@ export default class MainScene extends Phaser.Scene {
         this.engine.loadFen(fen);
 
         this.createPieces(); // Reset pieces
-        this.selectedSq = 0;
+        this.selectedSq = 0 as Square;
         this.updateSelection();
         this.busy = false;
 
@@ -546,7 +550,7 @@ export default class MainScene extends Phaser.Scene {
 
     public saveGame() {
         const moves = this.engine.getMoveList()
-            .filter(m => m > 0) // Filter out dummy move 0
+            .filter(m => (m as number) > 0) // Filter out dummy move 0
             .map(m => this.engine.moveToString(m));
 
         const gameState = {

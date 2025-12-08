@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 import { BOARD_OFFSET_X, BOARD_OFFSET_Y, PIECE_IMAGE_MAP, SQUARE_SIZE } from '../constants';
-import type { PieceType } from '../engine';
 import { FILE_X, RANK_Y } from '../engine/position';
+import type { PieceType } from '../engine/types';
 
 export class Piece extends Phaser.GameObjects.Sprite {
     public sq: number;

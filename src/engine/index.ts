@@ -1,24 +1,25 @@
 // src/engine/index.ts
-import { ASC, DST, MOVE, Position, SRC } from "./position.ts";
+import { ASC, DST, Position, SRC } from "./position.ts";
 import { Search } from "./search.ts";
+import type {
+    GameScores,
+    GameStatus,
+    Move,
+    PieceType,
+    Side,
+    Square,
+} from "./types";
+import {
+    createMove,
+    createSquare,
+    getSquareFile,
+    getSquareRank,
+    unsafeMove,
+    unsafeSquare,
+} from "./types";
 
-export type PieceType =
-    | 0
-    | 8
-    | 9
-    | 10
-    | 11
-    | 12
-    | 13
-    | 14
-    | 16
-    | 17
-    | 18
-    | 19
-    | 20
-    | 21
-    | 22
-    ;
+// Re-export types for backward compatibility
+export type { PieceType, Square, Move, Side, GameScores, GameStatus };
 
 
 export class XiangQiEngine {
@@ -47,26 +48,26 @@ export class XiangQiEngine {
     }
 
     // UCCI move string to internal move number
-    ucciMoveToInternal(ucciMove: string): number {
+    ucciMoveToInternal(ucciMove: string): Move {
         if (ucciMove.length !== 4) {
-            return 0; // Invalid move format
+            return 0 as Move; // Invalid move format
         }
         const srcSquare = this.ucciToSquare(ucciMove.substring(0, 2));
         const dstSquare = this.ucciToSquare(ucciMove.substring(2, 4));
-        return MOVE(srcSquare, dstSquare);
+        return createMove(srcSquare, dstSquare);
     }
 
     // Internal move number to UCCI move string
-    moveToString(move: number): string {
-        const sqSrc = SRC(move);
-        const sqDst = DST(move);
+    moveToString(move: Move): string {
+        const sqSrc = unsafeSquare(SRC(move as number));
+        const sqDst = unsafeSquare(DST(move as number));
         return `${this.squareToUcci(sqSrc)}${this.squareToUcci(sqDst)}`;
     }
 
     // Helper to convert internal square (0-255) to UCCI algebraic notation (e.g., 'a0', 'i9')
-    private squareToUcci(sq: number): string {
-        const file = (sq & 0xF) - 3; // Internal file 3-11 maps to 0-8 (a-i)
-        const rank = 9 - ((sq >> 4) - 3); // Internal rank 3-12 maps to 9-0
+    private squareToUcci(sq: Square): string {
+        const file = getSquareFile(sq) - 3; // Internal file 3-11 maps to 0-8 (a-i)
+        const rank = 9 - (getSquareRank(sq) - 3); // Internal rank 3-12 maps to 9-0
         if (file < 0 || file > 8 || rank < 0 || rank > 9) {
             return 'invalid'; // Should not happen with valid internal squares
         }
@@ -74,7 +75,7 @@ export class XiangQiEngine {
     }
 
     // Helper to convert UCCI algebraic notation (e.g., 'a0', 'i9') to internal square (0-255)
-    private ucciToSquare(ucciCoord: string): number {
+    private ucciToSquare(ucciCoord: string): Square {
         if (ucciCoord.length !== 2) {
             throw new Error(`Invalid UCCI coordinate format: ${ucciCoord}`);
         }
@@ -87,23 +88,23 @@ export class XiangQiEngine {
         if (file < 3 || file > 11 || rank < 3 || rank > 12) {
             throw new Error(`UCCI coordinate out of board bounds: ${ucciCoord}`);
         }
-        return (rank << 4) + file;
+        return createSquare(rank, file);
     }
 
     // Public API for making moves (UCCI string)
     makeMove(ucciMove: string): boolean {
         const internalMove = this.ucciMoveToInternal(ucciMove);
-        if (internalMove === 0) {
+        if ((internalMove as number) === 0) {
             console.error(`Invalid UCCI move string: ${ucciMove}`);
             return false;
         }
 
-        if (!this._position.legalMove(internalMove)) {
+        if (!this._position.legalMove(internalMove as number)) {
             console.error(`Illegal move: ${ucciMove}`);
             return false;
         }
 
-        const success = this._position.makeMove(internalMove);
+        const success = this._position.makeMove(internalMove as number);
         if (success) {
             this._search = new Search(this._position, 16);
         }
@@ -111,11 +112,11 @@ export class XiangQiEngine {
     }
 
     // Public API for making moves (internal number) - for UI to use
-    makeInternalMove(mv: number): boolean {
-        if (!this._position.legalMove(mv)) {
+    makeInternalMove(mv: Move): boolean {
+        if (!this._position.legalMove(mv as number)) {
             return false;
         }
-        const success = this._position.makeMove(mv);
+        const success = this._position.makeMove(mv as number);
         if (success) {
             this._search = new Search(this._position, 16);
         }
@@ -138,7 +139,7 @@ export class XiangQiEngine {
         if (bestMove === 0) {
             return "nomove";
         }
-        return this.moveToString(bestMove);
+        return this.moveToString(unsafeMove(bestMove));
     }
 
     // --- Getters for internal state needed by UI ---
@@ -146,12 +147,12 @@ export class XiangQiEngine {
         return this._position.squares;
     }
 
-    get sdPlayer(): number {
-        return this._position.sdPlayer;
+    get sdPlayer(): Side {
+        return this._position.sdPlayer as Side;
     }
 
-    legalMove(mv: number): boolean {
-        return this._position.legalMove(mv);
+    legalMove(mv: Move): boolean {
+        return this._position.legalMove(mv as number);
     }
 
     isMate(): boolean {
@@ -178,25 +179,27 @@ export class XiangQiEngine {
         return this._position.pcList.length;
     }
 
-    lastMove(): number {
-        return this._position.mvList[this._position.mvList.length - 1];
+    lastMove(): Move {
+        return unsafeMove(this._position.mvList[this._position.mvList.length - 1]);
     }
 
     getHistoryLength(): number {
         return this._position.mvList.length;
     }
 
-    getPiece(sq: number): PieceType {
-        return this._position.squares[sq];
+    getPiece(sq: Square): PieceType {
+        return this._position.squares[sq as number] as PieceType;
     }
 
-    getMoveList(): number[] {
-        return this._position.mvList;
+    getMoveList(): Move[] {
+        return this._position.mvList.map(m => unsafeMove(m));
     }
 
-    getLegalMovesForPiece(sq: number): number[] {
+    getLegalMovesForPiece(sq: Square): Move[] {
         const moves = this._position.generateMoves(null);
-        return moves.filter(mv => SRC(mv) === sq && this._position.legalMove(mv));
+        return moves
+            .filter(mv => SRC(mv) === (sq as number) && this._position.legalMove(mv))
+            .map(m => unsafeMove(m));
     }
 
     // Additional methods for UCCI protocol (already there)
@@ -215,7 +218,7 @@ export class XiangQiEngine {
         return this._position.toFen();
     }
 
-    getStatus(): { isMate: boolean; inCheck: boolean } {
+    getStatus(): GameStatus {
         return {
             isMate: this._position.isMate(),
             inCheck: this._position.inCheck()
@@ -226,7 +229,7 @@ export class XiangQiEngine {
         return this._position.vlWhite - this._position.vlBlack;
     }
 
-    getScores(): { red: number; black: number } {
+    getScores(): GameScores {
         return {
             red: this._position.vlWhite,
             black: this._position.vlBlack

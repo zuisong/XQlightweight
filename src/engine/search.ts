@@ -178,7 +178,7 @@ class MoveSort {
                 }
             // No Break
             // deno-lint-ignore no-fallthrough
-            case PHASE_GEN_MOVES:
+            case PHASE_GEN_MOVES: {
                 this.phase = PHASE_REST;
                 // Generate moves directly into stack?
                 // generateMoves returns array currently.
@@ -197,6 +197,7 @@ class MoveSort {
                 }
                 this.shellSortStack();
                 this.index = 0;
+            }
             // No Break
             default:
                 while (this.index < (this.end - this.start)) {

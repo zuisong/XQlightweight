@@ -110,7 +110,7 @@ describe('StorageManager', () => {
 
     describe('边界情况', () => {
         it('应该处理空对象', () => {
-            manager.save({});
+            manager.save({} as any);
             const loaded = manager.load();
 
             expect(loaded).toEqual({});

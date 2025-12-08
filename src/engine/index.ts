@@ -21,6 +21,7 @@ import {
 // Re-export types for backward compatibility
 export type { PieceType, Square, Move, Side, GameScores, GameStatus };
 
+const HASH_LEVEL = 18;
 
 export class XiangQiEngine {
     private _position: Position;
@@ -29,7 +30,7 @@ export class XiangQiEngine {
 
     constructor() {
         this._position = new Position();
-        this._search = new Search(this._position, 16); // Hash level 16 as a default
+        this._search = new Search(this._position, HASH_LEVEL);
         this._currentFen = "rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C5C1/9/RNBAKABNR w - - 0 1"; // Initial FEN
         this._position.fromFen(this._currentFen);
     }
@@ -39,7 +40,7 @@ export class XiangQiEngine {
             this._position.fromFen(fen);
             this._currentFen = fen;
             // Re-initialize search after changing position
-            this._search = new Search(this._position, 16);
+            this._search = new Search(this._position, HASH_LEVEL);
             return true;
         } catch (e) {
             console.error("Invalid FEN:", e);
@@ -106,7 +107,7 @@ export class XiangQiEngine {
 
         const success = this._position.makeMove(internalMove as number);
         if (success) {
-            this._search = new Search(this._position, 16);
+            this._search = new Search(this._position, HASH_LEVEL);
         }
         return success;
     }
@@ -118,7 +119,7 @@ export class XiangQiEngine {
         }
         const success = this._position.makeMove(mv as number);
         if (success) {
-            this._search = new Search(this._position, 16);
+            this._search = new Search(this._position, HASH_LEVEL);
         }
         return success;
     }
@@ -126,12 +127,12 @@ export class XiangQiEngine {
     // Public API for undoing moves (internal number) - for UI to use
     undoInternalMove(): void {
         this._position.undoMakeMove();
-        this._search = new Search(this._position, 16);
+        this._search = new Search(this._position, 18);
     }
 
     undoMove(): void { // This was used by UcciAdapter, keeping it for now
         this._position.undoMakeMove();
-        this._search = new Search(this._position, 16);
+        this._search = new Search(this._position, 18);
     }
 
     findBestMove(depth: number = 6, timeLimitMillis: number = 2000): string {

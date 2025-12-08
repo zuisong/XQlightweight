@@ -1,6 +1,7 @@
 import type React from 'react';
 import { useEffect, useState } from 'react';
 import type MainScene from '../game/MainScene';
+import { Handicap, MoveMode } from '../types';
 
 interface RestartModalProps {
     isOpen: boolean;
@@ -9,8 +10,8 @@ interface RestartModalProps {
 }
 
 const RestartModal: React.FC<RestartModalProps> = ({ isOpen, onClose, scene }) => {
-    const [moveMode, setMoveMode] = useState(0);
-    const [handicap, setHandicap] = useState(0);
+    const [moveMode, setMoveMode] = useState<MoveMode>(0);
+    const [handicap, setHandicap] = useState<Handicap>(0);
 
     useEffect(() => {
         if (isOpen && scene) {
@@ -21,8 +22,8 @@ const RestartModal: React.FC<RestartModalProps> = ({ isOpen, onClose, scene }) =
 
     const handleConfirm = () => {
         if (scene) {
-            scene.setMoveMode(moveMode);
-            scene.setHandicap(handicap);
+            scene.setMoveMode(moveMode as MoveMode);
+            scene.setHandicap(handicap as Handicap);
             scene.restart();
         }
         onClose();
@@ -59,7 +60,7 @@ const RestartModal: React.FC<RestartModalProps> = ({ isOpen, onClose, scene }) =
                 <div>
                     <label style={{ fontWeight: 'bold' }}>先手:</label>
                     <button
-                        onClick={() => setMoveMode((moveMode + 1) % 3)}
+                        onClick={() => setMoveMode((moveMode + 1) % 3 as MoveMode)}
                         style={toggleButtonStyle}
                     >
                         {['玩家先手', '电脑先手', '双人对战'][moveMode]}
@@ -69,7 +70,7 @@ const RestartModal: React.FC<RestartModalProps> = ({ isOpen, onClose, scene }) =
                 <div>
                     <label style={{ fontWeight: 'bold' }}>让子:</label>
                     <button
-                        onClick={() => setHandicap((handicap + 1) % 4)}
+                        onClick={() => setHandicap((handicap + 1) % 4 as Handicap)}
                         style={toggleButtonStyle}
                     >
                         {['无', '让左马', '让双马', '让九子'][handicap]}

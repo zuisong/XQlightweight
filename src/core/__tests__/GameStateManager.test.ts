@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { GameStateManager } from '../GameStateManager';
 import { XiangQiEngine } from '../../engine';
-import { createSquare, createMove, unsafeSquare } from '../../engine/types';
+import { createSquare, createMove, unsafeSquare, Move } from '../../engine/types';
 import { ucciSquare, SQUARES } from '../../engine/__tests__/test-helpers';
 
 describe('GameStateManager', () => {
@@ -67,7 +67,7 @@ describe('GameStateManager', () => {
         it('选择对方棋子应该失败', () => {
             // 红方先行，尝试选择黑方卒 c6
             const blackPawnSquare = SQUARES.BLACK_PAWN_C;
-            const result = manager.selectPiece(blackPawnSquare as number);
+            const result = manager.selectPiece(blackPawnSquare);
 
             expect(result).toBe(false);
             expect(manager.selectedSquare).toBe(0);
@@ -182,7 +182,7 @@ describe('GameStateManager', () => {
             // 创建一个无效的移动
             const invalidMove = 99999;
 
-            const result = manager.makeMove(invalidMove);
+            const result = manager.makeMove(invalidMove as unknown as Move);
 
             expect(result).toBe(false);
         });
@@ -268,17 +268,17 @@ describe('GameStateManager', () => {
     describe('难度设置', () => {
         it('应该设置难度（入门）', () => {
             manager.setDifficulty(0);
-            expect(manager.difficulty).toBe(10);
+            expect(manager.difficulty).toBe(500);
         });
 
         it('应该设置难度（业余）', () => {
             manager.setDifficulty(1);
-            expect(manager.difficulty).toBe(100);
+            expect(manager.difficulty).toBe(1500);
         });
 
         it('应该设置难度（专业）', () => {
             manager.setDifficulty(2);
-            expect(manager.difficulty).toBe(1000);
+            expect(manager.difficulty).toBe(3000);
         });
 
         it('设置难度应该触发回调', () => {
@@ -340,7 +340,7 @@ describe('GameStateManager', () => {
 
     describe('AI 相关', () => {
         it('应该能够找到最佳移动', () => {
-            const move = manager.findBestMove(16, 100);
+            const move = manager.findBestMove();
 
             // AI 应该能找到移动
             expect(typeof move).toBe('string');
@@ -416,7 +416,7 @@ describe('GameStateManager', () => {
         });
 
         it('应该处理无效的square值', () => {
-            const result = manager.selectPiece(999);
+            const result = manager.selectPiece(unsafeSquare(999));
             expect(result).toBe(false);
         });
 

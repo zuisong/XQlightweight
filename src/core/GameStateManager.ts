@@ -66,8 +66,9 @@ export class GameStateManager {
     }
 
     setDifficulty(level: number): void {
-        // level: 0=Easy(10ms), 1=Normal(100ms), 2=Hard(1000ms)
-        this._difficulty = 10 ** (level + 1);
+        // level: 0=Easy(500ms), 1=Normal(1500ms), 2=Hard(3000ms)
+        const difficultyMap = [500, 1500, 3000];
+        this._difficulty = difficultyMap[level] ?? 1500;
         this.notifyStateChange();
     }
 

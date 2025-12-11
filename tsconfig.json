@@ -18,8 +18,9 @@
     "noEmit": true,
     "types": [
       "vitest/globals",
-      "@testing-library/jest-dom/vitest"
-    ]
+      "@testing-library/jest-dom/vitest",
+      "node",
+    ],
   },
   "include": [
     "src"

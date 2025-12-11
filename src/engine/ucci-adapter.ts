@@ -1,5 +1,6 @@
 // src/engine/ucci-adapter.ts
 import * as readline from 'node:readline';
+import process from 'node:process';
 import { XiangQiEngine } from "./index.ts";
 
 export class UcciAdapter {

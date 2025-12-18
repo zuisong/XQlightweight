@@ -1,17 +1,16 @@
 import { useState } from 'react';
 import Game from './components/Game';
 import UI from './components/UI';
-import './App.css';
 
 function App() {
     const [gameInstance, setGameInstance] = useState<Phaser.Game | null>(null);
 
     return (
-        <div className="app-container">
-            <div className="game-wrapper">
+        <div className="w-screen h-screen flex flex-row justify-center items-center content-center bg-[#333] flex-wrap overflow-hidden p-2.5 gap-5 box-border">
+            <div className="w-full max-w-[521px] aspect-[521/577] shrink-0 max-h-[60vh]">
                 <Game setGameInstance={setGameInstance} />
             </div>
-            <div className="ui-wrapper">
+            <div className="w-full max-w-[521px] h-auto flex flex-col flex-[1_1_300px] overflow-hidden max-h-[35vh]">
                 <UI gameInstance={gameInstance} />
             </div>
         </div>

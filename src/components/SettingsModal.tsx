@@ -1,6 +1,7 @@
 import type React from 'react';
 import { useEffect, useState } from 'react';
 import type MainScene from '../game/MainScene';
+import './SettingsModal.css';
 
 interface SettingsModalProps {
     isOpen: boolean;
@@ -37,80 +38,43 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, scene })
     };
 
     const handleSoundChange = (enabled: boolean) => {
-        setSoundEnabled(enabled);
         scene?.setSound(enabled);
     };
 
     if (!isOpen) return null;
 
     return (
-        <div style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            width: '100%',
-            height: '100%',
-            backgroundColor: 'rgba(0,0,0,0.7)',
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            zIndex: 1000
-        }}>
-            <div style={{
-                backgroundColor: '#333',
-                padding: '20px',
-                borderRadius: '10px',
-                color: 'white',
-                width: '90%',
-                maxWidth: '400px',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '15px',
-                maxHeight: '90vh',
-                overflowY: 'auto'
-            }}>
-                <h2 style={{ margin: 0, textAlign: 'center' }}>游戏设置</h2>
+        <div className="modal-overlay">
+            <div className="modal-content">
+                <h2 className="modal-title">游戏设置</h2>
 
                 <div>
-                    <label style={{ fontWeight: 'bold' }}>难度:</label>
+                    <label className="modal-label">难度:</label>
                     <button type='button'
                         onClick={() => {
                             const nextDifficulty = (difficulty + 1) % 3;
                             handleDifficultyChange(nextDifficulty);
                         }}
-                        style={{
-                            marginTop: '5px',
-                            width: '100%',
-                            padding: '10px',
-                            borderRadius: '4px',
-                            backgroundColor: '#555',
-                            color: 'white',
-                            border: 'none',
-                            fontSize: '16px',
-                            cursor: 'pointer',
-                            textAlign: 'left'
-                        }}
+                        className="difficulty-button"
                     >
                         {['入门', '业余', '专业'][difficulty]}
                     </button>
                 </div>
 
-
-
                 <div>
-                    <label style={{ display: 'flex', alignItems: 'center', gap: '10px', fontWeight: 'bold', cursor: 'pointer' }}>
+                    <label className="checkbox-label">
                         <input
                             type="checkbox"
                             checked={soundEnabled}
                             onChange={(e) => handleSoundChange(e.target.checked)}
-                            style={{ width: '20px', height: '20px' }}
+                            className="checkbox-input"
                         />
                         开启音效
                     </label>
                 </div>
 
                 <div>
-                    <label style={{ display: 'flex', alignItems: 'center', gap: '10px', fontWeight: 'bold', cursor: 'pointer' }}>
+                    <label className="checkbox-label">
                         <input
                             type="checkbox"
                             checked={animated}
@@ -118,26 +82,26 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, scene })
                                 setAnimated(e.target.checked);
                                 scene?.setAnimated(e.target.checked);
                             }}
-                            style={{ width: '20px', height: '20px' }}
+                            className="checkbox-input"
                         />
                         开启动画
                     </label>
                 </div>
 
                 <div>
-                    <label style={{ display: 'flex', alignItems: 'center', gap: '10px', fontWeight: 'bold', cursor: 'pointer' }}>
+                    <label className="checkbox-label">
                         <input
                             type="checkbox"
                             defaultChecked={scene?.showScore ?? true}
                             onChange={(e) => scene?.setShowScore(e.target.checked)}
-                            style={{ width: '20px', height: '20px' }}
+                            className="checkbox-input"
                         />
                         显示评分
                     </label>
                 </div>
 
-                <div style={{ display: 'flex', justifyContent: 'center', marginTop: '10px' }}>
-                    <button type='button' onClick={onClose} style={{ padding: '10px 30px', cursor: 'pointer', backgroundColor: '#10B981', color: 'white', border: 'none', borderRadius: '5px', fontSize: '16px' }}>关闭</button>
+                <div className="modal-footer">
+                    <button type='button' onClick={onClose} className="close-button">关闭</button>
                 </div>
             </div>
         </div>

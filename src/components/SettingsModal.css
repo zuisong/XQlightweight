@@ -1,0 +1,77 @@
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.modal-content {
+    background-color: #333;
+    padding: 20px;
+    border-radius: 10px;
+    color: white;
+    width: 90%;
+    max-width: 400px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.modal-title {
+    margin: 0;
+    text-align: center;
+}
+
+.modal-label {
+    font-weight: bold;
+}
+
+.difficulty-button {
+    margin-top: 5px;
+    width: 100%;
+    padding: 10px;
+    border-radius: 4px;
+    background-color: #555;
+    color: white;
+    border: none;
+    font-size: 16px;
+    cursor: pointer;
+    text-align: left;
+}
+
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.checkbox-input {
+    width: 20px;
+    height: 20px;
+}
+
+.modal-footer {
+    display: flex;
+    justify-content: center;
+    margin-top: 10px;
+}
+
+.close-button {
+    padding: 10px 30px;
+    cursor: pointer;
+    background-color: #10B981;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    font-size: 16px;
+}

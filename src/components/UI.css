@@ -1,0 +1,72 @@
+.ui-container {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    padding: 10px;
+    color: white;
+    background-color: #444;
+    box-sizing: border-box;
+}
+
+.control-buttons-grid {
+    margin-bottom: 15px;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+}
+
+.ui-button {
+    padding: 10px 0;
+    cursor: pointer;
+    background-color: #555;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    font-size: 14px;
+    font-weight: bold;
+}
+
+.score-panel {
+    margin-bottom: 15px;
+    background-color: #333;
+    padding: 10px;
+    border-radius: 8px;
+}
+
+.score-bar-container {
+    display: flex;
+    height: 24px;
+    border-radius: 12px;
+    overflow: hidden;
+    position: relative;
+    background-color: #555;
+}
+
+.score-bar-red {
+    background-color: #FF6B6B;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    padding-left: 10px;
+    transition: width 0.3s ease;
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+.score-bar-black {
+    background-color: #4ECDC4;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding-right: 10px;
+    transition: width 0.3s ease;
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+.score-text {
+    font-size: 12px;
+    font-weight: bold;
+    color: white;
+}

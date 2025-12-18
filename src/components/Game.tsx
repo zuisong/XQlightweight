@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import type React from 'react';
 import { useEffect, useRef } from 'react';
 import MainScene from '../game/MainScene';
+import './Game.css';
 
 interface GameProps {
     setGameInstance: (game: Phaser.Game) => void;
@@ -37,7 +38,7 @@ const Game: React.FC<GameProps> = ({ setGameInstance }) => {
         };
     }, [setGameInstance]);
 
-    return <div ref={gameRef} style={{ width: '100%', height: '100%', maxWidth: '100%', maxHeight: '100%', position: 'relative' }} />;
+    return <div ref={gameRef} className="game-container" />;
 };
 
 export default Game;

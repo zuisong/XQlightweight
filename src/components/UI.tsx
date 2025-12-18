@@ -6,6 +6,7 @@ import type MainScene from '../game/MainScene';
 import RestartModal from './RestartModal';
 import SettingsModal from './SettingsModal';
 import { EVENTS } from '../game/events';
+import './UI.css';
 
 interface UIProps {
     gameInstance: Phaser.Game | null;
@@ -51,16 +52,7 @@ const UI: React.FC<UIProps> = ({ gameInstance }) => {
     }, [scene]);
 
     return (
-        <div style={{
-            width: '100%',
-            height: '100%',
-            display: 'flex',
-            flexDirection: 'column',
-            padding: '10px', // Reduced padding for mobile
-            color: 'white',
-            backgroundColor: '#444',
-            boxSizing: 'border-box'
-        }}>
+        <div className="ui-container">
             <SettingsModal
                 isOpen={isSettingsOpen}
                 onClose={() => setIsSettingsOpen(false)}
@@ -73,70 +65,39 @@ const UI: React.FC<UIProps> = ({ gameInstance }) => {
             />
 
             {/* Control Buttons - Grid Layout */}
-            <div style={{
-                marginBottom: '15px',
-                display: 'grid',
-                gridTemplateColumns: 'repeat(4, 1fr)',
-                gap: '8px'
-            }}>
-                <button type='button' onClick={() => setIsSettingsOpen(true)} style={buttonStyle}>设置</button>
-                <button type='button' onClick={() => setIsRestartOpen(true)} style={buttonStyle}>重开</button>
-                <button type='button' onClick={() => scene?.retract()} style={buttonStyle}>悔棋</button>
-                <button type='button' onClick={() => scene?.recommend()} style={buttonStyle}>提示</button>
+            <div className="control-buttons-grid">
+                <button type='button' onClick={() => setIsSettingsOpen(true)} className="ui-button">设置</button>
+                <button type='button' onClick={() => setIsRestartOpen(true)} className="ui-button">重开</button>
+                <button type='button' onClick={() => scene?.retract()} className="ui-button">悔棋</button>
+                <button type='button' onClick={() => scene?.recommend()} className="ui-button">提示</button>
             </div>
 
             {/* Scores */}
             {showScore && (
-                <div style={{
-                    marginBottom: '15px',
-                    backgroundColor: '#333',
-                    padding: '10px',
-                    borderRadius: '8px'
-                }}>
+                <div className="score-panel">
                     {(() => {
                         const total = scores.red + scores.black;
                         const redPercent = total === 0 ? 50 : Math.round((scores.red / total) * 100);
                         const blackPercent = total === 0 ? 50 : 100 - redPercent;
 
                         return (
-                            <div style={{
-                                display: 'flex',
-                                height: '24px',
-                                borderRadius: '12px',
-                                overflow: 'hidden',
-                                position: 'relative',
-                                backgroundColor: '#555'
-                            }}>
+                            <div className="score-bar-container">
                                 {/* Red Bar */}
-                                <div style={{
-                                    width: `${redPercent}%`,
-                                    backgroundColor: '#FF6B6B',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'flex-start',
-                                    paddingLeft: '10px',
-                                    transition: 'width 0.3s ease',
-                                    whiteSpace: 'nowrap',
-                                    overflow: 'hidden'
-                                }}>
-                                    <span style={{ fontSize: '12px', fontWeight: 'bold', color: 'white' }}>
+                                <div
+                                    className="score-bar-red"
+                                    style={{ width: `${redPercent}%` }}
+                                >
+                                    <span className="score-text">
                                         {redPercent > 10 ? `${redPercent}%` : ''}
                                     </span>
                                 </div>
 
                                 {/* Black Bar */}
-                                <div style={{
-                                    width: `${blackPercent}%`,
-                                    backgroundColor: '#4ECDC4',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'flex-end',
-                                    paddingRight: '10px',
-                                    transition: 'width 0.3s ease',
-                                    whiteSpace: 'nowrap',
-                                    overflow: 'hidden'
-                                }}>
-                                    <span style={{ fontSize: '12px', fontWeight: 'bold', color: 'white' }}>
+                                <div
+                                    className="score-bar-black"
+                                    style={{ width: `${blackPercent}%` }}
+                                >
+                                    <span className="score-text">
                                         {blackPercent > 10 ? `${blackPercent}%` : ''}
                                     </span>
                                 </div>
@@ -147,17 +108,6 @@ const UI: React.FC<UIProps> = ({ gameInstance }) => {
             )}
         </div>
     );
-};
-
-const buttonStyle = {
-    padding: '10px 0',
-    cursor: 'pointer',
-    backgroundColor: '#555',
-    color: 'white',
-    border: 'none',
-    borderRadius: '5px',
-    fontSize: '14px',
-    fontWeight: 'bold'
 };
 
 export default UI;
